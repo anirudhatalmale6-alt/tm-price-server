@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 
 app.use(cors());
@@ -9,10 +10,43 @@ app.use(express.json({ limit: '5mb' }));
 // Serve static admin panel
 app.use('/admin', express.static(path.join(__dirname, 'public')));
 
-// In-memory store: eventId -> { rules: [...], updatedAt: timestamp }
+// Persistent file-based store
+const DATA_DIR = path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const STORE_FILE = path.join(DATA_DIR, 'rules.json');
+
+// In-memory store backed by file
 const store = new Map();
 
-// Health check — redirect root to admin panel
+// Load from disk on startup
+function loadStore() {
+  try {
+    if (fs.existsSync(STORE_FILE)) {
+      const data = JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
+      for (const [key, val] of Object.entries(data)) {
+        store.set(key, val);
+      }
+      console.log(`[LOAD] Restored ${store.size} events from disk`);
+    }
+  } catch (e) {
+    console.log('[LOAD] Could not load store:', e.message);
+  }
+}
+
+// Save to disk
+function saveStore() {
+  try {
+    const obj = {};
+    store.forEach((val, key) => { obj[key] = val; });
+    fs.writeFileSync(STORE_FILE, JSON.stringify(obj, null, 2));
+  } catch (e) {
+    console.log('[SAVE] Could not persist store:', e.message);
+  }
+}
+
+loadStore();
+
+// Redirect root to admin panel
 app.get('/', (req, res) => {
   res.redirect('/admin');
 });
@@ -46,6 +80,7 @@ app.post('/api/rules/:eventId', (req, res) => {
     updatedAt: Date.now()
   });
 
+  saveStore();
   console.log(`[SAVE] Event ${eventId}: ${rules.length} rules`);
   res.json({ success: true, eventId, ruleCount: rules.length });
 });
@@ -66,6 +101,7 @@ app.get('/api/rules/:eventId', (req, res) => {
 app.delete('/api/rules/:eventId', (req, res) => {
   const { eventId } = req.params;
   store.delete(eventId);
+  saveStore();
   res.json({ success: true });
 });
 
