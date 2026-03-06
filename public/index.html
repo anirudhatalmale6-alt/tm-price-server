@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#e94560">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <title>TM Price Admin</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -620,6 +624,34 @@
       el.className = 'toast ' + type + ' show';
       clearTimeout(el._timer);
       el._timer = setTimeout(() => el.classList.remove('show'), 3500);
+    }
+
+    // ============ PWA INSTALL ============
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show install banner
+      const banner = document.createElement('div');
+      banner.id = 'installBanner';
+      banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#111127;border-top:2px solid #e94560;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;z-index:999;';
+      banner.innerHTML = '<span style="font-size:13px;">Install TM Price Admin as an app for quick access</span><div><button id="installBtn" style="padding:8px 20px;background:#e94560;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Install App</button><button id="dismissInstall" style="padding:8px 12px;background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:18px;margin-left:8px;">&times;</button></div>';
+      document.body.appendChild(banner);
+
+      document.getElementById('installBtn').addEventListener('click', async () => {
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        if (result.outcome === 'accepted') toast('App installed!', 'success');
+        deferredPrompt = null;
+        banner.remove();
+      });
+
+      document.getElementById('dismissInstall').addEventListener('click', () => banner.remove());
+    });
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/admin/sw.js').catch(() => {});
     }
   </script>
 </body>
