@@ -345,7 +345,7 @@
         const titleMatch = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
         if (titleMatch) eventName = titleMatch[1].replace(/<[^>]+>/g, '').trim();
 
-        const tmLinkMatch = html.match(/ticketmaster\.com\/(?:event|[\w-]+)\/([A-Z0-9]+)/i);
+        const tmLinkMatch = html.match(/ticketmaster\.com\/[^"]*\/event\/([A-Z0-9]+)/i);
         if (tmLinkMatch) {
           reportEventId = tmLinkMatch[1];
           document.getElementById('eventIdInput').value = reportEventId;
