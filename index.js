@@ -1,19 +1,38 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
+
+// Serve static admin panel
+app.use('/admin', express.static(path.join(__dirname, 'public')));
 
 // In-memory store: eventId -> { rules: [...], updatedAt: timestamp }
 const store = new Map();
 
-// Health check
+// Health check — redirect root to admin panel
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', events: store.size });
+  res.redirect('/admin');
 });
 
-// Save rules for an event (Admin extension)
+// Proxy endpoint for fetching Broker Buds reports (avoids CORS)
+app.get('/api/proxy', async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).json({ error: 'url parameter required' });
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return res.status(resp.status).json({ error: 'Upstream returned ' + resp.status });
+    const html = await resp.text();
+    res.type('text/html').send(html);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Save rules for an event (Admin panel / extension)
 app.post('/api/rules/:eventId', (req, res) => {
   const { eventId } = req.params;
   const { rules } = req.body;
@@ -62,4 +81,5 @@ app.get('/api/events', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`TM Price Server running on port ${PORT}`);
+  console.log(`Admin panel: http://localhost:${PORT}/admin`);
 });

@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TM Price Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0a14; color: #e2e8f0; min-height: 100vh; }
+
+    .topbar { background: #111127; border-bottom: 1px solid rgba(255,255,255,0.06); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .topbar h1 { font-size: 18px; font-weight: 800; color: #e94560; letter-spacing: 0.5px; }
+    .topbar .version { font-size: 11px; color: rgba(255,255,255,0.25); margin-left: 8px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .event-count { font-size: 11px; color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 12px; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px 24px; }
+
+    /* Import section */
+    .card { background: #111127; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .card-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+
+    .import-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .import-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s; }
+    .import-row input:focus { border-color: rgba(233,69,96,0.5); }
+    .import-row input::placeholder { color: rgba(255,255,255,0.2); }
+
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: #e94560; color: #fff; }
+    .btn-primary:hover { background: #d63851; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-blue { background: #3b82f6; color: #fff; }
+    .btn-blue:hover { background: #2563eb; }
+    .btn-green { background: #22c55e; color: #fff; }
+    .btn-green:hover { background: #16a34a; }
+    .btn-sm { padding: 6px 12px; font-size: 11px; border-radius: 6px; }
+
+    .or-divider { text-align: center; font-size: 11px; color: rgba(255,255,255,0.2); margin: 6px 0; }
+
+    .paste-area { width: 100%; height: 80px; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 11px; font-family: 'Courier New', monospace; resize: vertical; outline: none; }
+    .paste-area::placeholder { color: rgba(255,255,255,0.15); }
+    .paste-area:focus { border-color: rgba(233,69,96,0.4); }
+
+    /* Event info */
+    .event-info { background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.15); border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; display: none; }
+    .event-info .event-name { font-size: 16px; font-weight: 700; color: #60a5fa; }
+    .event-info .event-meta { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+    .event-info .event-stats { display: flex; gap: 16px; margin-top: 8px; }
+    .event-info .stat-item { font-size: 12px; }
+    .event-info .stat-num { font-weight: 700; color: #fff; }
+
+    /* Priority legend */
+    .legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: rgba(255,255,255,0.6); }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+    /* Filter & controls */
+    .controls { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+    .controls input, .controls select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 12px; outline: none; }
+    .controls input { min-width: 180px; }
+    .controls select { cursor: pointer; }
+    .controls select option { background: #111127; }
+
+    .bulk-bar { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .bulk-bar span { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .bulk-btn { padding: 5px 14px; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; color: #fff; transition: all 0.15s; }
+    .bulk-btn:hover { filter: brightness(1.2); }
+    .bulk-btn.bp1 { background: rgba(34,197,94,0.25); border: 1px solid #22c55e; }
+    .bulk-btn.bp2 { background: rgba(234,179,8,0.25); border: 1px solid #eab308; }
+    .bulk-btn.bp3 { background: rgba(59,130,246,0.25); border: 1px solid #3b82f6; }
+    .bulk-btn.bavoid { background: rgba(239,68,68,0.25); border: 1px solid #ef4444; }
+    .bulk-btn.bclear { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; max-height: 500px; overflow-y: auto; }
+    .table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+    .table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { position: sticky; top: 0; z-index: 10; }
+    th { text-align: left; padding: 10px 12px; background: #1a1a35; color: rgba(255,255,255,0.5); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    th:hover { color: rgba(255,255,255,0.8); }
+    th .sort-arrow { font-size: 9px; margin-left: 3px; color: rgba(255,255,255,0.3); }
+    td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .price-cell { font-weight: 600; font-family: 'Courier New', monospace; }
+    .qty-cell { text-align: center; }
+    .type-cell { font-size: 11px; color: rgba(255,255,255,0.35); }
+
+    .row-check { width: 16px; height: 16px; cursor: pointer; accent-color: #e94560; }
+
+    .priority-select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px 8px; color: #fff; font-size: 11px; cursor: pointer; min-width: 80px; }
+    .priority-select option { background: #111127; }
+    .priority-select.ps1 { border-color: #22c55e; background: rgba(34,197,94,0.12); }
+    .priority-select.ps2 { border-color: #eab308; background: rgba(234,179,8,0.12); }
+    .priority-select.ps3 { border-color: #3b82f6; background: rgba(59,130,246,0.12); }
+    .priority-select.psavoid { border-color: #ef4444; background: rgba(239,68,68,0.12); }
+
+    /* Priority row indicators */
+    tr.rp1 { border-left: 3px solid #22c55e; }
+    tr.rp2 { border-left: 3px solid #eab308; }
+    tr.rp3 { border-left: 3px solid #3b82f6; }
+    tr.rpavoid { border-left: 3px solid #ef4444; }
+
+    /* Bottom bar */
+    .bottom-bar { position: sticky; bottom: 0; background: #111127; border-top: 1px solid rgba(255,255,255,0.06); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; margin-top: 16px; border-radius: 12px; }
+    .bottom-bar .summary { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .bottom-bar .summary strong { color: #fff; }
+
+    /* Status toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 1000; transform: translateY(80px); opacity: 0; transition: all 0.3s ease; pointer-events: none; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: #22c55e; color: #fff; }
+    .toast.error { background: #ef4444; color: #fff; }
+    .toast.info { background: #3b82f6; color: #fff; }
+
+    /* Event ID input */
+    .event-id-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .event-id-row label { font-size: 12px; color: rgba(255,255,255,0.5); white-space: nowrap; }
+    .event-id-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 12px; outline: none; font-family: 'Courier New', monospace; }
+
+    /* Active events sidebar */
+    .active-events { margin-top: 12px; }
+    .active-event { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 6px; font-size: 12px; cursor: pointer; transition: background 0.15s; }
+    .active-event:hover { background: rgba(255,255,255,0.06); }
+    .active-event .ae-id { font-family: 'Courier New', monospace; color: #60a5fa; }
+    .active-event .ae-rules { color: rgba(255,255,255,0.4); }
+    .active-event .ae-delete { color: #ef4444; cursor: pointer; font-size: 14px; padding: 2px 6px; border: none; background: none; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.25); }
+    .empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-state p { font-size: 13px; margin-top: 6px; }
+
+    @media (max-width: 768px) {
+      .container { padding: 12px; }
+      .controls { flex-direction: column; }
+      .controls input { min-width: 100%; }
+      .bulk-bar { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div style="display:flex;align-items:baseline;">
+      <h1>TM PRICE ADMIN</h1>
+      <span class="version">v2.0</span>
+    </div>
+    <div class="topbar-right">
+      <span class="event-count" id="eventCount">0 events</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Import Card -->
+    <div class="card">
+      <div class="card-title">Import Broker Buds Report</div>
+      <div class="import-row">
+        <input type="text" id="reportUrl" placeholder="Paste Broker Buds report URL here...">
+        <button class="btn btn-blue" id="importUrlBtn">Import</button>
+      </div>
+      <div class="or-divider">— or paste the raw HTML source —</div>
+      <textarea class="paste-area" id="reportHtml" placeholder="Paste the complete HTML source code of the Broker Buds report here..."></textarea>
+      <button class="btn btn-blue btn-sm" id="parseHtmlBtn" style="margin-top:8px;width:100%;">Parse Pasted HTML</button>
+    </div>
+
+    <!-- Event Info -->
+    <div class="event-info" id="eventInfo">
+      <div class="event-name" id="eventName"></div>
+      <div class="event-meta" id="eventMeta"></div>
+      <div class="event-stats">
+        <div class="stat-item"><span class="stat-num" id="statEntries">0</span> entries</div>
+        <div class="stat-item"><span class="stat-num" id="statTickets">0</span> tickets</div>
+        <div class="stat-item"><span class="stat-num" id="statPrices">0</span> price tiers</div>
+      </div>
+    </div>
+
+    <!-- Event ID -->
+    <div class="card" id="eventIdCard" style="display:none;">
+      <div class="event-id-row">
+        <label>Event ID:</label>
+        <input type="text" id="eventIdInput" placeholder="Auto-detected from report, or enter manually">
+      </div>
+    </div>
+
+    <!-- Inventory Section -->
+    <div id="inventorySection" style="display:none;">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div>1st Priority</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#eab308;"></div>2nd Target</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>3rd Target</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>Avoid</div>
+      </div>
+
+      <div class="controls">
+        <input type="text" id="filterSection" placeholder="Filter by section...">
+        <select id="filterPrice">
+          <option value="">All prices</option>
+        </select>
+        <select id="filterPriority">
+          <option value="">All priorities</option>
+          <option value="1">1st Priority</option>
+          <option value="2">2nd Target</option>
+          <option value="3">3rd Target</option>
+          <option value="avoid">Avoid</option>
+          <option value="none">Unassigned</option>
+        </select>
+      </div>
+
+      <div class="bulk-bar">
+        <input type="checkbox" class="row-check" id="checkAll" title="Select all visible">
+        <span>Assign selected:</span>
+        <button class="bulk-btn bp1" data-priority="1">1st Priority</button>
+        <button class="bulk-btn bp2" data-priority="2">2nd Target</button>
+        <button class="bulk-btn bp3" data-priority="3">3rd Target</button>
+        <button class="bulk-btn bavoid" data-priority="avoid">Avoid</button>
+        <button class="bulk-btn bclear" data-priority="">Clear</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:30px;"><input type="checkbox" class="row-check" id="checkAllHead"></th>
+              <th data-sort="section">Section <span class="sort-arrow"></span></th>
+              <th data-sort="price">Price <span class="sort-arrow"></span></th>
+              <th data-sort="count">Qty <span class="sort-arrow"></span></th>
+              <th data-sort="type">Type <span class="sort-arrow"></span></th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+      </div>
+
+      <div class="bottom-bar">
+        <div class="summary" id="summaryText">0 entries</div>
+        <button class="btn btn-primary" id="pushBtn">Push Priority Rules to Server</button>
+      </div>
+    </div>
+
+    <!-- Active Events Card -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Active Events on Server</div>
+      <div class="active-events" id="activeEvents">
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>No events with rules yet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ============ STATE ============
+    let inventoryData = [];
+    let reportEventId = '';
+    let sortCol = 'price';
+    let sortAsc = true;
+
+    const SERVER = window.location.origin;
+
+    const PRIORITY_LABELS = { '1': '1st Priority', '2': '2nd Target', '3': '3rd Target', 'avoid': 'Avoid' };
+    const PRIORITY_COLORS = { '1': '#22c55e', '2': '#eab308', '3': '#3b82f6', 'avoid': '#ef4444' };
+
+    // ============ INIT ============
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('importUrlBtn').addEventListener('click', importFromUrl);
+      document.getElementById('parseHtmlBtn').addEventListener('click', parseFromHtml);
+      document.getElementById('pushBtn').addEventListener('click', pushRules);
+      document.getElementById('checkAll').addEventListener('change', toggleCheckAll);
+      document.getElementById('checkAllHead').addEventListener('change', toggleCheckAll);
+      document.getElementById('filterSection').addEventListener('input', renderInventory);
+      document.getElementById('filterPrice').addEventListener('change', renderInventory);
+      document.getElementById('filterPriority').addEventListener('change', renderInventory);
+
+      document.querySelectorAll('.bulk-btn').forEach(btn => {
+        btn.addEventListener('click', () => assignSelected(btn.dataset.priority));
+      });
+
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.dataset.sort;
+          if (sortCol === col) sortAsc = !sortAsc;
+          else { sortCol = col; sortAsc = true; }
+          updateSortArrows();
+          renderInventory();
+        });
+      });
+
+      loadActiveEvents();
+    });
+
+    // ============ IMPORT ============
+    async function importFromUrl() {
+      const url = document.getElementById('reportUrl').value.trim();
+      if (!url) { toast('Enter a report URL', 'error'); return; }
+
+      toast('Fetching report...', 'info');
+
+      try {
+        // Use our proxy to avoid CORS
+        const resp = await fetch(SERVER + '/api/proxy?url=' + encodeURIComponent(url));
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const html = await resp.text();
+        parseReportHtml(html);
+      } catch (e) {
+        toast('Failed to fetch: ' + e.message, 'error');
+      }
+    }
+
+    function parseFromHtml() {
+      const html = document.getElementById('reportHtml').value.trim();
+      if (!html) { toast('Paste the report HTML first', 'error'); return; }
+      parseReportHtml(html);
+    }
+
+    function parseReportHtml(html) {
+      try {
+        // Extract tickets JSON array
+        let tickets;
+        const ticketsMatch = html.match(/tickets:\s*(\[[\s\S]*?\])\s*[,\n\r]/);
+        if (ticketsMatch) {
+          tickets = JSON.parse(ticketsMatch[1]);
+        } else {
+          const altMatch = html.match(/"tickets":\s*(\[[\s\S]*?\])/);
+          if (altMatch) tickets = JSON.parse(altMatch[1]);
+          else { toast('Could not find ticket data in the report HTML', 'error'); return; }
+        }
+
+        inventoryData = tickets.map((t, i) => ({
+          ...t,
+          _priority: '',
+          _checked: false,
+          _idx: i
+        }));
+
+        // Extract event info
+        let eventName = '';
+        const titleMatch = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+        if (titleMatch) eventName = titleMatch[1].replace(/<[^>]+>/g, '').trim();
+
+        const tmLinkMatch = html.match(/ticketmaster\.com\/(?:event|[\w-]+)\/([A-Z0-9]+)/i);
+        if (tmLinkMatch) {
+          reportEventId = tmLinkMatch[1];
+          document.getElementById('eventIdInput').value = reportEventId;
+        }
+
+        // Show event info
+        document.getElementById('eventName').textContent = eventName || 'Unknown Event';
+        document.getElementById('eventMeta').textContent = reportEventId ? 'TM Event: ' + reportEventId : '';
+        document.getElementById('statEntries').textContent = inventoryData.length;
+        document.getElementById('statTickets').textContent = inventoryData.reduce((s, t) => s + (t.count || 0), 0).toLocaleString();
+        const uniquePrices = [...new Set(inventoryData.map(t => t.price))];
+        document.getElementById('statPrices').textContent = uniquePrices.length;
+        document.getElementById('eventInfo').style.display = 'block';
+
+        // Populate price filter
+        const prices = uniquePrices.sort((a, b) => a - b);
+        const filterPrice = document.getElementById('filterPrice');
+        filterPrice.innerHTML = '<option value="">All prices ($' + prices[0] + ' — $' + prices[prices.length - 1] + ')</option>';
+        prices.forEach(p => {
+          filterPrice.innerHTML += '<option value="' + p + '">$' + p + '</option>';
+        });
+
+        // Show inventory UI
+        document.getElementById('eventIdCard').style.display = 'block';
+        document.getElementById('inventorySection').style.display = 'block';
+
+        updateSortArrows();
+        renderInventory();
+        toast('Imported ' + inventoryData.length + ' entries', 'success');
+
+      } catch (e) {
+        toast('Parse error: ' + e.message, 'error');
+      }
+    }
+
+    // ============ INVENTORY TABLE ============
+    function renderInventory() {
+      const filterSec = document.getElementById('filterSection').value.trim().toLowerCase();
+      const filterPrc = document.getElementById('filterPrice').value;
+      const filterPri = document.getElementById('filterPriority').value;
+
+      let filtered = inventoryData.filter(item => {
+        if (filterSec && !item.section.toLowerCase().includes(filterSec)) return false;
+        if (filterPrc && item.price !== parseFloat(filterPrc)) return false;
+        if (filterPri === 'none' && item._priority) return false;
+        if (filterPri === 'none' && !item._priority) return true;
+        if (filterPri && filterPri !== 'none' && item._priority !== filterPri) return false;
+        return true;
+      });
+
+      // Sort
+      filtered.sort((a, b) => {
+        let va, vb;
+        if (sortCol === 'section') {
+          va = a.section; vb = b.section;
+          const na = parseInt(va), nb = parseInt(vb);
+          if (!isNaN(na) && !isNaN(nb)) return sortAsc ? na - nb : nb - na;
+          return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+        } else if (sortCol === 'price') {
+          va = a.price; vb = b.price;
+        } else if (sortCol === 'count') {
+          va = a.count; vb = b.count;
+        } else if (sortCol === 'type') {
+          va = a.offerType || ''; vb = b.offerType || '';
+          return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+        return sortAsc ? va - vb : vb - va;
+      });
+
+      const tbody = document.getElementById('inventoryBody');
+      tbody.innerHTML = '';
+
+      filtered.forEach(item => {
+        const tr = document.createElement('tr');
+        const pClass = item._priority ? (item._priority === 'avoid' ? 'rpavoid' : 'rp' + item._priority) : '';
+        if (pClass) tr.className = pClass;
+
+        const psClass = item._priority ? (item._priority === 'avoid' ? 'psavoid' : 'ps' + item._priority) : '';
+
+        tr.innerHTML = `
+          <td><input type="checkbox" class="row-check" data-idx="${item._idx}" ${item._checked ? 'checked' : ''}></td>
+          <td>${item.section}</td>
+          <td class="price-cell">$${item.price}</td>
+          <td class="qty-cell">${item.count}</td>
+          <td class="type-cell">${item.offerType || 'Standard'}</td>
+          <td>
+            <select class="priority-select ${psClass}" data-idx="${item._idx}">
+              <option value="">—</option>
+              <option value="1" ${item._priority === '1' ? 'selected' : ''}>1st Priority</option>
+              <option value="2" ${item._priority === '2' ? 'selected' : ''}>2nd Target</option>
+              <option value="3" ${item._priority === '3' ? 'selected' : ''}>3rd Target</option>
+              <option value="avoid" ${item._priority === 'avoid' ? 'selected' : ''}>Avoid</option>
+            </select>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Bind events
+      tbody.querySelectorAll('.priority-select').forEach(sel => {
+        sel.addEventListener('change', e => {
+          const idx = parseInt(e.target.dataset.idx);
+          inventoryData[idx]._priority = e.target.value;
+          renderInventory();
+        });
+      });
+
+      tbody.querySelectorAll('.row-check').forEach(cb => {
+        cb.addEventListener('change', e => {
+          const idx = parseInt(e.target.dataset.idx);
+          inventoryData[idx]._checked = e.target.checked;
+        });
+      });
+
+      updateSummary(filtered);
+    }
+
+    function updateSummary(filtered) {
+      const assigned = inventoryData.filter(i => i._priority);
+      const p1 = assigned.filter(i => i._priority === '1').length;
+      const p2 = assigned.filter(i => i._priority === '2').length;
+      const p3 = assigned.filter(i => i._priority === '3').length;
+      const pa = assigned.filter(i => i._priority === 'avoid').length;
+
+      let text = `Showing ${filtered.length} of ${inventoryData.length} entries`;
+      if (assigned.length > 0) {
+        text += ` | Assigned: `;
+        const parts = [];
+        if (p1) parts.push(`<span style="color:#22c55e">${p1} 1st</span>`);
+        if (p2) parts.push(`<span style="color:#eab308">${p2} 2nd</span>`);
+        if (p3) parts.push(`<span style="color:#3b82f6">${p3} 3rd</span>`);
+        if (pa) parts.push(`<span style="color:#ef4444">${pa} avoid</span>`);
+        text += parts.join(', ');
+      }
+      document.getElementById('summaryText').innerHTML = text;
+    }
+
+    function updateSortArrows() {
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        const arrow = th.querySelector('.sort-arrow');
+        if (th.dataset.sort === sortCol) {
+          arrow.textContent = sortAsc ? '▲' : '▼';
+          arrow.style.color = '#e94560';
+        } else {
+          arrow.textContent = '';
+        }
+      });
+    }
+
+    function toggleCheckAll(e) {
+      const checked = e.target.checked;
+      document.getElementById('checkAll').checked = checked;
+      document.getElementById('checkAllHead').checked = checked;
+      document.querySelectorAll('#inventoryBody .row-check').forEach(cb => {
+        const idx = parseInt(cb.dataset.idx);
+        cb.checked = checked;
+        inventoryData[idx]._checked = checked;
+      });
+    }
+
+    function assignSelected(priority) {
+      let count = 0;
+      inventoryData.forEach(item => {
+        if (item._checked) {
+          item._priority = priority;
+          item._checked = false;
+          count++;
+        }
+      });
+      if (count === 0) { toast('No rows selected — use checkboxes first', 'error'); return; }
+      document.getElementById('checkAll').checked = false;
+      document.getElementById('checkAllHead').checked = false;
+      renderInventory();
+      toast(count + ' rows → ' + (priority ? PRIORITY_LABELS[priority] : 'Cleared'), 'success');
+    }
+
+    // ============ PUSH RULES ============
+    async function pushRules() {
+      const eventId = document.getElementById('eventIdInput').value.trim() || reportEventId;
+      if (!eventId) { toast('Enter an Event ID', 'error'); return; }
+
+      // Build rules from assigned inventory
+      const rules = [];
+      const assigned = inventoryData.filter(i => i._priority);
+
+      if (assigned.length === 0) { toast('Assign priorities first — no rows are tagged', 'error'); return; }
+
+      // Group by section + priority for cleaner rules
+      const groups = {};
+      assigned.forEach(item => {
+        const key = item.section + '||' + item._priority;
+        if (!groups[key]) groups[key] = { section: item.section, priority: item._priority, prices: new Set() };
+        groups[key].prices.add(item.price);
+      });
+
+      for (const g of Object.values(groups)) {
+        const pricesArr = [...g.prices].sort((a, b) => a - b);
+        rules.push({
+          type: 'section',
+          sections: [g.section],
+          prices: pricesArr,
+          priority: g.priority,
+          label: (PRIORITY_LABELS[g.priority]) + ' — Sec ' + g.section + ' ($' + pricesArr.join(', $') + ')'
+        });
+      }
+
+      toast('Pushing ' + rules.length + ' rules...', 'info');
+
+      try {
+        const resp = await fetch(SERVER + '/api/rules/' + eventId, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rules })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          toast('Pushed ' + data.ruleCount + ' rules to server!', 'success');
+          loadActiveEvents();
+        } else {
+          toast('Server error: ' + (data.error || 'unknown'), 'error');
+        }
+      } catch (e) {
+        toast('Failed: ' + e.message, 'error');
+      }
+    }
+
+    // ============ ACTIVE EVENTS ============
+    async function loadActiveEvents() {
+      try {
+        const resp = await fetch(SERVER + '/api/events');
+        const events = await resp.json();
+        document.getElementById('eventCount').textContent = events.length + ' event' + (events.length !== 1 ? 's' : '');
+
+        const container = document.getElementById('activeEvents');
+        if (events.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No events with rules yet</p></div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        events.forEach(ev => {
+          const div = document.createElement('div');
+          div.className = 'active-event';
+          const time = ev.updatedAt ? new Date(ev.updatedAt).toLocaleString() : '';
+          div.innerHTML = `
+            <span class="ae-id">${ev.eventId}</span>
+            <span class="ae-rules">${ev.ruleCount} rules${time ? ' · ' + time : ''}</span>
+            <button class="ae-delete" data-event="${ev.eventId}" title="Delete rules">&times;</button>
+          `;
+          container.appendChild(div);
+        });
+
+        container.querySelectorAll('.ae-delete').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const eid = btn.dataset.event;
+            await fetch(SERVER + '/api/rules/' + eid, { method: 'DELETE' });
+            toast('Deleted rules for ' + eid, 'info');
+            loadActiveEvents();
+          });
+        });
+
+      } catch (e) {
+        console.log('Failed to load events:', e);
+      }
+    }
+
+    // ============ TOAST ============
+    function toast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast ' + type + ' show';
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+</html>
