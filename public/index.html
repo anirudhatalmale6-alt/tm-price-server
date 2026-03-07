@@ -252,7 +252,9 @@
         sortCol: 'price',
         sortAsc: true,
         zones: [],
-        activeZone: ''
+        activeZone: '',
+        filteredOrder: [],
+        lastCheckedVisualIdx: -1
       });
     }
     let activeTab = 0;
@@ -409,7 +411,7 @@
     }
 
     function clearTab(idx) {
-      tabState[idx] = { inventoryData: [], reportEventId: '', eventName: '', sortCol: 'price', sortAsc: true, zones: [], activeZone: '' };
+      tabState[idx] = { inventoryData: [], reportEventId: '', eventName: '', sortCol: 'price', sortAsc: true, zones: [], activeZone: '', filteredOrder: [], lastCheckedVisualIdx: -1 };
       document.getElementById('tabContent' + idx).innerHTML = buildTabHtml(idx);
       updateTabLabel(idx);
       toast('Tab cleared', 'info');
@@ -696,17 +698,20 @@
         return state.sortAsc ? va - vb : vb - va;
       });
 
+      // Store filtered order for shift-click range selection
+      state.filteredOrder = filtered;
+
       const tbody = document.getElementById('inventoryBody' + idx);
       tbody.innerHTML = '';
 
-      filtered.forEach(item => {
+      filtered.forEach((item, visualIdx) => {
         const tr = document.createElement('tr');
         const pClass = item._priority ? (item._priority === 'avoid' ? 'rpavoid' : 'rp' + item._priority) : '';
         if (pClass) tr.className = pClass;
         const psClass = item._priority ? (item._priority === 'avoid' ? 'psavoid' : 'ps' + item._priority) : '';
 
         tr.innerHTML = `
-          <td><input type="checkbox" class="row-check" data-idx="${item._idx}" data-tab="${idx}" ${item._checked ? 'checked' : ''} onchange="onRowCheck(${idx}, ${item._idx}, this.checked)"></td>
+          <td><input type="checkbox" class="row-check" data-idx="${item._idx}" data-tab="${idx}" data-visual="${visualIdx}" ${item._checked ? 'checked' : ''} onclick="onRowCheck(${idx}, ${item._idx}, ${visualIdx}, this, event)"></td>
           <td>${item.section}</td>
           <td class="price-cell">$${item.price}</td>
           <td class="qty-cell">${item.count}</td>
@@ -727,8 +732,33 @@
       updateSummary(idx, filtered);
     }
 
-    function onRowCheck(tabIdx, itemIdx, checked) {
-      tabState[tabIdx].inventoryData[itemIdx]._checked = checked;
+    function onRowCheck(tabIdx, itemIdx, visualIdx, checkbox, event) {
+      const state = tabState[tabIdx];
+      const checked = checkbox.checked;
+
+      // Shift+click: select range between last checked and current
+      if (event.shiftKey && state.lastCheckedVisualIdx >= 0 && state.lastCheckedVisualIdx !== visualIdx) {
+        const start = Math.min(state.lastCheckedVisualIdx, visualIdx);
+        const end = Math.max(state.lastCheckedVisualIdx, visualIdx);
+
+        for (let i = start; i <= end; i++) {
+          if (state.filteredOrder[i]) {
+            state.filteredOrder[i]._checked = checked;
+          }
+        }
+
+        // Update all visible checkboxes in the range
+        const allChecks = document.querySelectorAll('#inventoryBody' + tabIdx + ' .row-check');
+        allChecks.forEach(cb => {
+          const vi = parseInt(cb.dataset.visual);
+          if (vi >= start && vi <= end) {
+            cb.checked = checked;
+          }
+        });
+      }
+
+      state.inventoryData[itemIdx]._checked = checked;
+      state.lastCheckedVisualIdx = visualIdx;
     }
 
     function onPriorityChange(tabIdx, itemIdx, value) {
