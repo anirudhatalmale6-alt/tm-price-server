@@ -29,7 +29,27 @@
     .event-tab .tab-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; display: none; position: absolute; top: 8px; right: 8px; }
     .event-tab.has-data .tab-dot { display: block; }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 20px 24px; }
+    .container { max-width: 1800px; margin: 0 auto; padding: 20px 24px; }
+    .container.with-map { display: flex; gap: 20px; }
+    .container.with-map .main-col { flex: 1; min-width: 0; }
+    .container.with-map .map-col { width: 420px; flex-shrink: 0; position: sticky; top: 110px; align-self: flex-start; max-height: calc(100vh - 130px); overflow-y: auto; }
+    .container.with-map .map-col::-webkit-scrollbar { width: 5px; }
+    .container.with-map .map-col::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* Map panel */
+    .map-panel { background: #111127; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; }
+    .map-panel .map-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .map-panel .map-close { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; padding: 0 4px; }
+    .map-panel .map-close:hover { color: #ef4444; }
+    .map-panel .map-img-wrap { position: relative; border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.3); min-height: 200px; display: flex; align-items: center; justify-content: center; }
+    .map-panel .map-img-wrap img { width: 100%; height: auto; display: block; cursor: zoom-in; }
+    .map-panel .map-img-wrap img.zoomed { cursor: zoom-out; transform: scale(1.8); transform-origin: center center; }
+    .map-panel .map-placeholder { font-size: 12px; color: rgba(255,255,255,0.25); text-align: center; padding: 40px 10px; }
+    .map-panel .map-url-row { display: flex; gap: 6px; margin-top: 10px; }
+    .map-panel .map-url-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 11px; outline: none; }
+    .map-panel .map-url-row input::placeholder { color: rgba(255,255,255,0.2); }
+    .map-panel .map-url-row button { padding: 6px 12px; }
+    .map-btn-toggle { margin-left: auto; }
 
     .card { background: #111127; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
     .card-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
@@ -179,7 +199,7 @@
   <div class="topbar">
     <div style="display:flex;align-items:baseline;">
       <h1>TM PRICE ADMIN</h1>
-      <span class="version">v3.1</span>
+      <span class="version">v3.2</span>
     </div>
     <div class="topbar-right">
       <span class="event-count" id="eventCount">0 events</span>
@@ -210,23 +230,42 @@
     </div>
   </div>
 
-  <div class="container">
-    <!-- Tab 0 -->
-    <div class="tab-content active" id="tabContent0"></div>
-    <!-- Tab 1 -->
-    <div class="tab-content" id="tabContent1"></div>
-    <!-- Tab 2 -->
-    <div class="tab-content" id="tabContent2"></div>
-    <!-- Tab 3 -->
-    <div class="tab-content" id="tabContent3"></div>
+  <div class="container" id="mainContainer">
+    <div class="main-col">
+      <!-- Tab 0 -->
+      <div class="tab-content active" id="tabContent0"></div>
+      <!-- Tab 1 -->
+      <div class="tab-content" id="tabContent1"></div>
+      <!-- Tab 2 -->
+      <div class="tab-content" id="tabContent2"></div>
+      <!-- Tab 3 -->
+      <div class="tab-content" id="tabContent3"></div>
 
-    <!-- Active Events Card (shared) -->
-    <div class="card" style="margin-top:16px;">
-      <div class="card-title">Active Events on Server</div>
-      <div class="active-events" id="activeEvents">
-        <div class="empty-state">
-          <div class="empty-icon">&#128203;</div>
-          <p>No events with rules yet</p>
+      <!-- Active Events Card (shared) -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Active Events on Server</div>
+        <div class="active-events" id="activeEvents">
+          <div class="empty-state">
+            <div class="empty-icon">&#128203;</div>
+            <p>No events with rules yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Panel (hidden by default) -->
+    <div class="map-col" id="mapCol" style="display:none;">
+      <div class="map-panel">
+        <div class="map-title">
+          <span>Venue Map</span>
+          <button class="map-close" onclick="hideMap()">&times;</button>
+        </div>
+        <div class="map-img-wrap" id="mapImgWrap">
+          <div class="map-placeholder" id="mapPlaceholder">Loading venue map...</div>
+        </div>
+        <div class="map-url-row">
+          <input type="text" id="mapUrlInput" placeholder="Paste custom map image URL...">
+          <button class="btn btn-sm btn-blue" onclick="loadCustomMap()">Load</button>
         </div>
       </div>
     </div>
@@ -274,12 +313,17 @@
         </div>
 
         <div class="event-info" id="eventInfo${idx}">
-          <div class="event-name" id="eventName${idx}"></div>
-          <div class="event-meta" id="eventMeta${idx}"></div>
-          <div class="event-stats">
-            <div class="stat-item"><span class="stat-num" id="statEntries${idx}">0</span> entries</div>
-            <div class="stat-item"><span class="stat-num" id="statTickets${idx}">0</span> tickets</div>
-            <div class="stat-item"><span class="stat-num" id="statPrices${idx}">0</span> price tiers</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div class="event-name" id="eventName${idx}"></div>
+              <div class="event-meta" id="eventMeta${idx}"></div>
+              <div class="event-stats">
+                <div class="stat-item"><span class="stat-num" id="statEntries${idx}">0</span> entries</div>
+                <div class="stat-item"><span class="stat-num" id="statTickets${idx}">0</span> tickets</div>
+                <div class="stat-item"><span class="stat-num" id="statPrices${idx}">0</span> price tiers</div>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-blue" onclick="toggleMap(${idx})" id="mapToggle${idx}">Show Map</button>
           </div>
         </div>
 
@@ -927,6 +971,111 @@
       } catch (e) {
         console.log('Failed to load events:', e);
       }
+    }
+
+    // ============ VENUE MAP ============
+    let mapVisible = false;
+
+    function toggleMap(idx) {
+      if (mapVisible) { hideMap(); return; }
+      showMap(idx);
+    }
+
+    function showMap(idx) {
+      const state = tabState[idx];
+      const eventId = document.getElementById('eventIdInput' + idx)?.value.trim() || state.reportEventId;
+
+      mapVisible = true;
+      const container = document.getElementById('mainContainer');
+      container.classList.add('with-map');
+      document.getElementById('mapCol').style.display = 'block';
+
+      // Update toggle button text
+      const btn = document.getElementById('mapToggle' + idx);
+      if (btn) btn.textContent = 'Hide Map';
+
+      if (!eventId) {
+        document.getElementById('mapPlaceholder').textContent = 'No Event ID — paste a map image URL below';
+        document.getElementById('mapPlaceholder').style.display = 'block';
+        return;
+      }
+
+      // Try multiple TM seating chart sources (direct + proxied)
+      const directUrl = 'https://mapsapi.tmol.io/maps/geometry/3/event/' + eventId + '/staticImage?type=png&systemId=HOST';
+      const mapUrls = [
+        directUrl,
+        SERVER + '/api/map-proxy?url=' + encodeURIComponent(directUrl),
+        'https://maps.ticketmaster.com/maps/geometry/3/event/' + eventId + '/staticImage?type=png&systemId=HOST'
+      ];
+
+      loadMapImage(mapUrls, 0);
+    }
+
+    function loadMapImage(urls, index) {
+      if (index >= urls.length) {
+        document.getElementById('mapPlaceholder').textContent = 'Could not load venue map. Paste a map image URL below.';
+        document.getElementById('mapPlaceholder').style.display = 'block';
+        return;
+      }
+
+      const wrap = document.getElementById('mapImgWrap');
+      const placeholder = document.getElementById('mapPlaceholder');
+
+      // Remove old image
+      const oldImg = wrap.querySelector('img');
+      if (oldImg) oldImg.remove();
+      placeholder.style.display = 'block';
+      placeholder.textContent = 'Loading venue map...';
+
+      const img = new Image();
+      img.onload = function() {
+        placeholder.style.display = 'none';
+        wrap.appendChild(img);
+        img.onclick = function() { img.classList.toggle('zoomed'); };
+      };
+      img.onerror = function() {
+        loadMapImage(urls, index + 1);
+      };
+      img.src = urls[index];
+      img.style.cssText = 'width:100%;height:auto;display:block;cursor:zoom-in;transition:transform 0.3s;';
+    }
+
+    function hideMap() {
+      mapVisible = false;
+      const container = document.getElementById('mainContainer');
+      container.classList.remove('with-map');
+      document.getElementById('mapCol').style.display = 'none';
+
+      // Reset all toggle buttons
+      for (let i = 0; i < NUM_TABS; i++) {
+        const btn = document.getElementById('mapToggle' + i);
+        if (btn) btn.textContent = 'Show Map';
+      }
+    }
+
+    function loadCustomMap() {
+      const url = document.getElementById('mapUrlInput').value.trim();
+      if (!url) { toast('Enter a map image URL', 'error'); return; }
+
+      const wrap = document.getElementById('mapImgWrap');
+      const placeholder = document.getElementById('mapPlaceholder');
+      const oldImg = wrap.querySelector('img');
+      if (oldImg) oldImg.remove();
+
+      placeholder.style.display = 'block';
+      placeholder.textContent = 'Loading...';
+
+      const img = new Image();
+      img.onload = function() {
+        placeholder.style.display = 'none';
+        wrap.appendChild(img);
+        img.onclick = function() { img.classList.toggle('zoomed'); };
+      };
+      img.onerror = function() {
+        placeholder.textContent = 'Failed to load image. Check the URL.';
+      };
+      img.src = url;
+      img.style.cssText = 'width:100%;height:auto;display:block;cursor:zoom-in;transition:transform 0.3s;';
     }
 
     // ============ TOAST ============

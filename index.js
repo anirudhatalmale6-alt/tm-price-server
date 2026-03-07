@@ -114,6 +114,23 @@ app.get('/api/events', (req, res) => {
   res.json(events);
 });
 
+// Image proxy for venue maps (avoids CORS)
+app.get('/api/map-proxy', async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).json({ error: 'url parameter required' });
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return res.status(resp.status).end();
+    const contentType = resp.headers.get('content-type') || 'image/png';
+    res.type(contentType);
+    const buffer = await resp.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`TM Price Server running on port ${PORT}`);
