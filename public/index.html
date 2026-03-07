@@ -51,6 +51,55 @@
     .map-panel .map-url-row button { padding: 6px 12px; }
     .map-btn-toggle { margin-left: auto; }
 
+    /* View on TM button */
+    .tm-live-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; margin-top: 10px; background: linear-gradient(135deg, #026CDF 0%, #0180FF 100%); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+    .tm-live-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .tm-live-btn .tm-icon { font-size: 16px; }
+
+    /* Section Availability Grid */
+    .section-avail { margin-top: 14px; }
+    .section-avail-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .section-avail-title .avail-stats { font-size: 10px; font-weight: 400; color: rgba(255,255,255,0.3); text-transform: none; letter-spacing: 0; }
+    .section-avail-title .refresh-btn { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 14px; cursor: pointer; padding: 2px 4px; }
+    .section-avail-title .refresh-btn:hover { color: #60a5fa; }
+
+    .zone-group { margin-bottom: 12px; }
+    .zone-group-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); padding: 4px 8px; background: rgba(255,255,255,0.03); border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .zone-group-title .zg-stats { color: rgba(255,255,255,0.25); font-weight: 400; }
+    .section-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    .sec-chip { position: relative; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); transition: all 0.15s; min-width: 64px; text-align: center; user-select: none; }
+    .sec-chip:hover { transform: translateY(-1px); z-index: 5; }
+    .sec-chip.active { outline: 2px solid #fff; outline-offset: 1px; }
+    .sec-chip .sec-name { display: block; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .sec-chip .sec-price { display: block; font-size: 9px; font-weight: 400; margin-top: 1px; opacity: 0.7; }
+    .sec-chip .sec-qty { position: absolute; top: -4px; right: -4px; background: rgba(0,0,0,0.7); color: #fff; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 8px; min-width: 14px; text-align: center; }
+
+    /* Chip colors by priority */
+    .sec-chip.cp-none { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+    .sec-chip.cp-1 { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4); color: #4ade80; }
+    .sec-chip.cp-2 { background: rgba(234,179,8,0.15); border-color: rgba(234,179,8,0.4); color: #facc15; }
+    .sec-chip.cp-3 { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.4); color: #60a5fa; }
+    .sec-chip.cp-avoid { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171; }
+
+    /* Price heatmap - unassigned sections colored by price level */
+    .sec-chip.heat-low { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.2); color: rgba(34,197,94,0.8); }
+    .sec-chip.heat-mid { background: rgba(234,179,8,0.08); border-color: rgba(234,179,8,0.2); color: rgba(234,179,8,0.8); }
+    .sec-chip.heat-high { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: rgba(239,68,68,0.8); }
+
+    /* Tooltip */
+    .sec-tooltip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1a1a35; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 12px; min-width: 180px; z-index: 100; font-size: 11px; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.4); pointer-events: none; }
+    .sec-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1a1a35; }
+    .sec-chip:hover .sec-tooltip { display: block; }
+    .sec-tooltip .tt-name { font-weight: 700; color: #fff; font-size: 13px; margin-bottom: 4px; }
+    .sec-tooltip .tt-row { color: rgba(255,255,255,0.6); margin-bottom: 2px; }
+    .sec-tooltip .tt-row strong { color: #fff; }
+    .sec-tooltip .tt-priority { margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); font-weight: 600; }
+    .sec-tooltip .tt-priority.tp1 { color: #22c55e; }
+    .sec-tooltip .tt-priority.tp2 { color: #eab308; }
+    .sec-tooltip .tt-priority.tp3 { color: #3b82f6; }
+    .sec-tooltip .tt-priority.tpavoid { color: #ef4444; }
+
     .card { background: #111127; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
     .card-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
 
@@ -199,7 +248,7 @@
   <div class="topbar">
     <div style="display:flex;align-items:baseline;">
       <h1>TM PRICE ADMIN</h1>
-      <span class="version">v3.2</span>
+      <span class="version">v4.0</span>
     </div>
     <div class="topbar-right">
       <span class="event-count" id="eventCount">0 events</span>
@@ -262,6 +311,20 @@
         </div>
         <div class="map-img-wrap" id="mapImgWrap">
           <div class="map-placeholder" id="mapPlaceholder">Loading venue map...</div>
+        </div>
+        <!-- View Live on TM -->
+        <a class="tm-live-btn" id="tmLiveLink" href="#" target="_blank" style="display:none;">
+          <span class="tm-icon">&#127903;</span> View Live on Ticketmaster
+        </a>
+        <!-- Interactive Section Availability -->
+        <div class="section-avail" id="sectionAvail">
+          <div class="section-avail-title">
+            <span>Section Availability</span>
+            <span class="avail-stats" id="availStats"></span>
+          </div>
+          <div id="sectionGrid">
+            <div style="text-align:center;padding:20px 0;color:rgba(255,255,255,0.2);font-size:12px;">Import inventory to see sections</div>
+          </div>
         </div>
         <div class="map-url-row">
           <input type="text" id="mapUrlInput" placeholder="Paste custom map image URL...">
@@ -659,6 +722,7 @@
       });
 
       renderInventory(idx);
+      refreshSectionGrid();
       toast(count + ' rows in ' + state.activeZone + ' → ' + (priority ? PRIORITY_LABELS[priority] : 'Cleared'), 'success');
     }
 
@@ -808,6 +872,7 @@
     function onPriorityChange(tabIdx, itemIdx, value) {
       tabState[tabIdx].inventoryData[itemIdx]._priority = value;
       renderInventory(tabIdx);
+      refreshSectionGrid();
     }
 
     function updateSummary(idx, filtered) {
@@ -881,6 +946,7 @@
       if (ca) ca.checked = false;
       if (cah) cah.checked = false;
       renderInventory(idx);
+      refreshSectionGrid();
       toast(count + ' rows → ' + (priority ? PRIORITY_LABELS[priority] : 'Cleared'), 'success');
     }
 
@@ -973,8 +1039,9 @@
       }
     }
 
-    // ============ VENUE MAP ============
+    // ============ VENUE MAP & SECTION AVAILABILITY ============
     let mapVisible = false;
+    let mapTabIdx = -1;
 
     function toggleMap(idx) {
       if (mapVisible) { hideMap(); return; }
@@ -986,6 +1053,7 @@
       const eventId = document.getElementById('eventIdInput' + idx)?.value.trim() || state.reportEventId;
 
       mapVisible = true;
+      mapTabIdx = idx;
       const container = document.getElementById('mainContainer');
       container.classList.add('with-map');
       document.getElementById('mapCol').style.display = 'block';
@@ -994,21 +1062,31 @@
       const btn = document.getElementById('mapToggle' + idx);
       if (btn) btn.textContent = 'Hide Map';
 
+      // Show TM Live link
+      const tmLink = document.getElementById('tmLiveLink');
+      if (eventId) {
+        tmLink.href = 'https://www.ticketmaster.com/event/' + eventId;
+        tmLink.style.display = 'flex';
+      } else {
+        tmLink.style.display = 'none';
+      }
+
       if (!eventId) {
         document.getElementById('mapPlaceholder').textContent = 'No Event ID — paste a map image URL below';
         document.getElementById('mapPlaceholder').style.display = 'block';
-        return;
+      } else {
+        // Try multiple TM seating chart sources (direct + proxied)
+        const directUrl = 'https://mapsapi.tmol.io/maps/geometry/3/event/' + eventId + '/staticImage?type=png&systemId=HOST';
+        const mapUrls = [
+          directUrl,
+          SERVER + '/api/map-proxy?url=' + encodeURIComponent(directUrl),
+          'https://maps.ticketmaster.com/maps/geometry/3/event/' + eventId + '/staticImage?type=png&systemId=HOST'
+        ];
+        loadMapImage(mapUrls, 0);
       }
 
-      // Try multiple TM seating chart sources (direct + proxied)
-      const directUrl = 'https://mapsapi.tmol.io/maps/geometry/3/event/' + eventId + '/staticImage?type=png&systemId=HOST';
-      const mapUrls = [
-        directUrl,
-        SERVER + '/api/map-proxy?url=' + encodeURIComponent(directUrl),
-        'https://maps.ticketmaster.com/maps/geometry/3/event/' + eventId + '/staticImage?type=png&systemId=HOST'
-      ];
-
-      loadMapImage(mapUrls, 0);
+      // Build interactive section grid
+      buildSectionGrid(idx);
     }
 
     function loadMapImage(urls, index) {
@@ -1042,6 +1120,7 @@
 
     function hideMap() {
       mapVisible = false;
+      mapTabIdx = -1;
       const container = document.getElementById('mainContainer');
       container.classList.remove('with-map');
       document.getElementById('mapCol').style.display = 'none';
@@ -1076,6 +1155,182 @@
       };
       img.src = url;
       img.style.cssText = 'width:100%;height:auto;display:block;cursor:zoom-in;transition:transform 0.3s;';
+    }
+
+    // ============ INTERACTIVE SECTION GRID ============
+    function buildSectionGrid(idx) {
+      const state = tabState[idx];
+      const grid = document.getElementById('sectionGrid');
+      const statsEl = document.getElementById('availStats');
+
+      if (!state.inventoryData.length) {
+        grid.innerHTML = '<div style="text-align:center;padding:20px 0;color:rgba(255,255,255,0.2);font-size:12px;">Import inventory to see sections</div>';
+        statsEl.textContent = '';
+        return;
+      }
+
+      // Aggregate data per section
+      const sections = {};
+      state.inventoryData.forEach(item => {
+        const secName = item.section;
+        if (!sections[secName]) {
+          sections[secName] = {
+            name: secName,
+            zone: getZoneForSection(secName),
+            minPrice: Infinity,
+            maxPrice: -Infinity,
+            totalQty: 0,
+            entries: 0,
+            priorities: new Set(),
+            dominantPriority: ''
+          };
+        }
+        const sec = sections[secName];
+        sec.minPrice = Math.min(sec.minPrice, item.price);
+        sec.maxPrice = Math.max(sec.maxPrice, item.price);
+        sec.totalQty += item.count || 0;
+        sec.entries++;
+        if (item._priority) sec.priorities.add(item._priority);
+      });
+
+      // Determine dominant priority per section
+      for (const sec of Object.values(sections)) {
+        if (sec.priorities.size === 1) {
+          sec.dominantPriority = [...sec.priorities][0];
+        } else if (sec.priorities.size > 1) {
+          // Priority order: 1 > 2 > 3 > avoid
+          const order = ['1', '2', '3', 'avoid'];
+          for (const p of order) {
+            if (sec.priorities.has(p)) { sec.dominantPriority = p; break; }
+          }
+        }
+      }
+
+      // Get global price range for heatmap coloring
+      const allPrices = Object.values(sections).map(s => s.minPrice);
+      const globalMin = Math.min(...allPrices);
+      const globalMax = Math.max(...allPrices);
+      const priceRange = globalMax - globalMin || 1;
+
+      // Group by zone
+      const zoneGroups = {};
+      for (const sec of Object.values(sections)) {
+        if (!zoneGroups[sec.zone]) zoneGroups[sec.zone] = [];
+        zoneGroups[sec.zone].push(sec);
+      }
+
+      // Sort zones
+      const sortedZones = Object.keys(zoneGroups).sort((a, b) => {
+        const aNum = parseInt(a);
+        const bNum = parseInt(b);
+        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+        if (!isNaN(aNum)) return -1;
+        if (!isNaN(bNum)) return 1;
+        return a.localeCompare(b);
+      });
+
+      // Sort sections within each zone by section name/number
+      for (const zone of sortedZones) {
+        zoneGroups[zone].sort((a, b) => {
+          const aNum = parseInt(a.name.match(/\d+/)?.[0] || '0');
+          const bNum = parseInt(b.name.match(/\d+/)?.[0] || '0');
+          if (aNum !== bNum) return aNum - bNum;
+          return a.name.localeCompare(b.name);
+        });
+      }
+
+      // Build HTML
+      let html = '';
+      const totalSections = Object.keys(sections).length;
+      const totalQty = Object.values(sections).reduce((s, sec) => s + sec.totalQty, 0);
+
+      for (const zone of sortedZones) {
+        const zoneSecs = zoneGroups[zone];
+        const zoneQty = zoneSecs.reduce((s, sec) => s + sec.totalQty, 0);
+        const zoneMinPrice = Math.min(...zoneSecs.map(s => s.minPrice));
+
+        html += '<div class="zone-group">';
+        html += '<div class="zone-group-title"><span>' + zone + '</span><span class="zg-stats">' + zoneSecs.length + ' sec · ' + zoneQty + ' tix · from $' + zoneMinPrice + '</span></div>';
+        html += '<div class="section-chips">';
+
+        for (const sec of zoneSecs) {
+          // Determine chip color class
+          let colorClass = 'cp-none';
+          if (sec.dominantPriority) {
+            colorClass = sec.dominantPriority === 'avoid' ? 'cp-avoid' : 'cp-' + sec.dominantPriority;
+          } else {
+            // Heatmap by price when no priority assigned
+            const pctile = (sec.minPrice - globalMin) / priceRange;
+            if (pctile <= 0.33) colorClass = 'heat-low';
+            else if (pctile <= 0.66) colorClass = 'heat-mid';
+            else colorClass = 'heat-high';
+          }
+
+          // Priority label for tooltip
+          let priLabel = 'Unassigned';
+          let priClass = '';
+          if (sec.dominantPriority) {
+            priLabel = PRIORITY_LABELS[sec.dominantPriority] || sec.dominantPriority;
+            priClass = sec.dominantPriority === 'avoid' ? 'tpavoid' : 'tp' + sec.dominantPriority;
+          }
+
+          const priceDisplay = sec.minPrice === sec.maxPrice ? '$' + sec.minPrice : '$' + sec.minPrice + '-$' + sec.maxPrice;
+
+          html += '<div class="sec-chip ' + colorClass + '" data-section="' + sec.name + '" onclick="onSectionChipClick(\'' + sec.name.replace(/'/g, "\\'") + '\')" title="">';
+          html += '<span class="sec-qty">' + sec.totalQty + '</span>';
+          html += '<span class="sec-name">' + sec.name + '</span>';
+          html += '<span class="sec-price">' + priceDisplay + '</span>';
+
+          // Tooltip
+          html += '<div class="sec-tooltip">';
+          html += '<div class="tt-name">' + sec.name + '</div>';
+          html += '<div class="tt-row">Price: <strong>' + priceDisplay + '</strong></div>';
+          html += '<div class="tt-row">Tickets: <strong>' + sec.totalQty + '</strong> (' + sec.entries + ' listing' + (sec.entries > 1 ? 's' : '') + ')</div>';
+          html += '<div class="tt-row">Zone: <strong>' + sec.zone + '</strong></div>';
+          html += '<div class="tt-priority ' + priClass + '">' + priLabel + '</div>';
+          html += '</div>';
+
+          html += '</div>';
+        }
+
+        html += '</div></div>';
+      }
+
+      grid.innerHTML = html;
+      statsEl.textContent = totalSections + ' sections · ' + totalQty + ' tickets';
+    }
+
+    function onSectionChipClick(sectionName) {
+      const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
+      const state = tabState[idx];
+
+      // Set section filter in the table
+      const filterInput = document.getElementById('filterSection' + idx);
+      if (filterInput) {
+        // Toggle: if already filtered to this section, clear it
+        if (filterInput.value.trim().toLowerCase() === sectionName.toLowerCase()) {
+          filterInput.value = '';
+        } else {
+          filterInput.value = sectionName;
+        }
+        renderInventory(idx);
+      }
+
+      // Highlight active chip
+      document.querySelectorAll('.sec-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.section === sectionName && filterInput.value.trim() !== '');
+      });
+
+      // Scroll to the inventory table
+      const tableWrap = document.querySelector('#inventorySection' + idx + ' .table-wrap');
+      if (tableWrap) tableWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Refresh section grid when priorities change
+    function refreshSectionGrid() {
+      if (mapVisible && mapTabIdx >= 0) {
+        buildSectionGrid(mapTabIdx);
+      }
     }
 
     // ============ TOAST ============
