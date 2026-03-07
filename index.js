@@ -139,6 +139,83 @@ app.get('/api/map-proxy', async (req, res) => {
   }
 });
 
+// ============ PHANTOMCHECKER INTEGRATION ============
+const PC_API = 'https://api.phantomcheckerapi.com/api/v1';
+const FIREBASE_API_KEY = 'AIzaSyDrD5U6PJ5WhCBmrtTaQzAe1dteO103ux0';
+const PC_EMAIL = 'remote@nickets.com';
+const PC_PASSWORD = 'rWvXirgpVy4uEhZ';
+
+let pcToken = null;
+let pcTokenExpiry = 0;
+let pcRefreshToken = null;
+
+async function getPCToken() {
+  // Return cached token if still valid (with 5min buffer)
+  if (pcToken && Date.now() < pcTokenExpiry - 300000) return pcToken;
+
+  // Try refresh first
+  if (pcRefreshToken) {
+    try {
+      const resp = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: pcRefreshToken })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        pcToken = data.id_token;
+        pcRefreshToken = data.refresh_token;
+        pcTokenExpiry = Date.now() + parseInt(data.expires_in) * 1000;
+        console.log('[PC] Token refreshed');
+        return pcToken;
+      }
+    } catch (e) { /* fall through to full login */ }
+  }
+
+  // Full login
+  try {
+    const resp = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: PC_EMAIL, password: PC_PASSWORD, returnSecureToken: true })
+    });
+    if (!resp.ok) throw new Error('Firebase login failed: ' + resp.status);
+    const data = await resp.json();
+    pcToken = data.idToken;
+    pcRefreshToken = data.refreshToken;
+    pcTokenExpiry = Date.now() + parseInt(data.expiresIn) * 1000;
+    console.log('[PC] Logged in successfully');
+    return pcToken;
+  } catch (e) {
+    console.log('[PC] Login error:', e.message);
+    throw e;
+  }
+}
+
+// Get live stock data for a TM event
+app.get('/api/stock/:eventId', async (req, res) => {
+  const { eventId } = req.params;
+  try {
+    const token = await getPCToken();
+    const resp = await fetch(`${PC_API}/sites/ticketmaster/stock-info`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ eventId })
+    });
+    if (!resp.ok) throw new Error('PC API returned ' + resp.status);
+    const data = await resp.json();
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Pre-warm PC token on startup
+getPCToken().catch(() => {});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`TM Price Server running on port ${PORT}`);

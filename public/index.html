@@ -43,21 +43,59 @@
     .map-panel .map-close:hover { color: #ef4444; }
     .map-btn-toggle { margin-left: auto; }
 
-    /* PhantomChecker iframe */
-    .pc-frame-wrap { position: relative; border-radius: 8px; overflow: hidden; background: #0a0a1a; height: 500px; border: 1px solid rgba(255,255,255,0.08); }
-    .pc-iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
-    .pc-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); cursor: pointer; transition: opacity 0.2s; }
-    .pc-overlay:hover { background: rgba(0,0,0,0.4); }
-    .pc-overlay.hidden { display: none; }
-    .pc-overlay-text { color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 600; }
+    /* Stock loading */
+    .stock-loading { text-align: center; padding: 30px 10px; color: rgba(255,255,255,0.3); font-size: 12px; }
+    .stock-loading .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Stock summary bar */
+    .stock-summary { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .stock-stat { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); font-size: 11px; text-align: center; flex: 1; min-width: 80px; }
+    .stock-stat .ss-num { display: block; font-size: 16px; font-weight: 800; color: #10b981; }
+    .stock-stat .ss-label { color: rgba(255,255,255,0.4); font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Stock zone cards */
+    .stock-zone { margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; }
+    .stock-zone-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); cursor: pointer; user-select: none; }
+    .stock-zone-head:hover { background: rgba(255,255,255,0.05); }
+    .stock-zone-name { font-size: 13px; font-weight: 700; }
+    .stock-zone-stats { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .stock-zone-stats .sz-avail { color: #10b981; font-weight: 700; }
+    .stock-zone-stats .sz-price { color: #facc15; }
+    .stock-zone-body { padding: 8px; }
+
+    /* Stock section chips (in stock panel) */
+    .stock-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .stock-chip { position: relative; padding: 5px 8px; border-radius: 6px; font-size: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); transition: all 0.15s; text-align: center; min-width: 56px; }
+    .stock-chip:hover { transform: translateY(-1px); z-index: 5; border-color: rgba(255,255,255,0.25); }
+    .stock-chip.active { outline: 2px solid #fff; outline-offset: 1px; }
+    .stock-chip .sc-name { display: block; font-weight: 700; font-size: 10px; }
+    .stock-chip .sc-price { display: block; font-size: 8px; opacity: 0.7; margin-top: 1px; }
+    .stock-chip .sc-avail { position: absolute; top: -4px; right: -4px; background: #10b981; color: #fff; font-size: 7px; font-weight: 800; padding: 1px 3px; border-radius: 6px; min-width: 12px; text-align: center; }
+    .stock-chip.sc-sold { opacity: 0.3; border-style: dashed; }
+    .stock-chip.sc-sold .sc-avail { background: #ef4444; }
+
+    /* Stock chip colors by price tier */
+    .stock-chip.tier-1 { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); color: #4ade80; }
+    .stock-chip.tier-2 { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.3); color: #60a5fa; }
+    .stock-chip.tier-3 { background: rgba(234,179,8,0.12); border-color: rgba(234,179,8,0.3); color: #facc15; }
+    .stock-chip.tier-4 { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171; }
 
     /* Action buttons */
-    .pc-actions { display: flex; gap: 6px; margin-top: 10px; }
-    .pc-btn { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 10px; border: none; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+    .pc-actions { display: flex; gap: 6px; margin-top: 10px; margin-bottom: 10px; }
+    .pc-btn { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 8px; border: none; border-radius: 8px; color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-decoration: none; }
     .pc-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
-    .pc-btn-primary { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .pc-btn-refresh { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
     .pc-btn-tm { background: linear-gradient(135deg, #026CDF 0%, #0180FF 100%); }
-    .pc-icon { font-size: 14px; }
+    .pc-icon { font-size: 12px; }
+
+    /* Tooltip for stock chips */
+    .stock-chip .sc-tooltip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1a1a35; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 10px; min-width: 160px; z-index: 100; font-size: 10px; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.4); pointer-events: none; text-align: left; }
+    .stock-chip .sc-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #1a1a35; }
+    .stock-chip:hover .sc-tooltip { display: block; }
+    .sc-tooltip .stt-name { font-weight: 700; color: #fff; font-size: 12px; margin-bottom: 3px; }
+    .sc-tooltip .stt-row { color: rgba(255,255,255,0.6); margin-bottom: 1px; }
+    .sc-tooltip .stt-row strong { color: #fff; }
 
     /* Section Availability Grid */
     .section-avail { margin-top: 14px; }
@@ -251,7 +289,7 @@
   <div class="topbar">
     <div style="display:flex;align-items:baseline;">
       <h1>TM PRICE ADMIN</h1>
-      <span class="version">v4.1</span>
+      <span class="version">v5.0</span>
     </div>
     <div class="topbar-right">
       <span class="event-count" id="eventCount">0 events</span>
@@ -312,30 +350,23 @@
           <span>Live Stock</span>
           <button class="map-close" onclick="hideMap()">&times;</button>
         </div>
-        <!-- PhantomChecker iframe -->
-        <div class="pc-frame-wrap" id="pcFrameWrap">
-          <iframe id="pcFrame" src="about:blank" class="pc-iframe" allow="clipboard-read; clipboard-write"></iframe>
-          <div class="pc-overlay" id="pcOverlay">
-            <div class="pc-overlay-text">Click to load PhantomChecker Live Stock</div>
-          </div>
-        </div>
         <!-- Buttons row -->
         <div class="pc-actions">
-          <button class="pc-btn pc-btn-primary" onclick="openPhantomPopup()" title="Open in resizable popup window">
-            <span class="pc-icon">&#128301;</span> Open Live Stock
+          <button class="pc-btn pc-btn-refresh" onclick="fetchLiveStock()">
+            <span class="pc-icon">&#8635;</span> Refresh Stock
           </button>
           <a class="pc-btn pc-btn-tm" id="tmLiveLink" href="#" target="_blank">
             <span class="pc-icon">&#127903;</span> Ticketmaster
           </a>
         </div>
-        <!-- Section Availability from inventory -->
-        <div class="section-avail" id="sectionAvail">
-          <div class="section-avail-title">
-            <span>Inventory Sections</span>
-            <span class="avail-stats" id="availStats"></span>
+        <!-- Live stock data -->
+        <div id="stockContainer">
+          <div class="stock-loading" id="stockLoading" style="display:none;">
+            <div class="spinner"></div>
+            <div>Fetching live stock from Ticketmaster...</div>
           </div>
-          <div id="sectionGrid">
-            <div style="text-align:center;padding:20px 0;color:rgba(255,255,255,0.2);font-size:12px;">Import inventory to see sections</div>
+          <div id="stockContent">
+            <div style="text-align:center;padding:30px 10px;color:rgba(255,255,255,0.15);font-size:12px;">Import a report to auto-load live stock</div>
           </div>
         </div>
       </div>
@@ -616,6 +647,11 @@
         renderInventory(idx);
         updateTabLabel(idx);
         toast('Imported ' + state.inventoryData.length + ' entries', 'success');
+
+        // Auto-show live stock panel if we have an event ID
+        if (state.reportEventId) {
+          showMap(idx);
+        }
 
       } catch (e) {
         toast('Parse error: ' + e.message, 'error');
@@ -1047,11 +1083,10 @@
       }
     }
 
-    // ============ LIVE STOCK PANEL (PHANTOMCHECKER) ============
+    // ============ LIVE STOCK PANEL ============
     let mapVisible = false;
     let mapTabIdx = -1;
-    let pcPopup = null;
-    const PC_URL = 'https://phantomchecker.com/dashboard/live-stock';
+    let lastStockData = null;
 
     function toggleMap(idx) {
       if (mapVisible) { hideMap(); return; }
@@ -1064,247 +1099,166 @@
 
       mapVisible = true;
       mapTabIdx = idx;
-      const container = document.getElementById('mainContainer');
-      container.classList.add('with-map');
+      document.getElementById('mainContainer').classList.add('with-map');
       document.getElementById('mapCol').style.display = 'block';
 
-      // Update toggle button text
       const btn = document.getElementById('mapToggle' + idx);
       if (btn) btn.textContent = 'Hide Panel';
 
-      // Set TM link
       const tmLink = document.getElementById('tmLiveLink');
-      if (eventId) {
-        tmLink.href = 'https://www.ticketmaster.com/event/' + eventId;
-      }
+      if (eventId) tmLink.href = 'https://www.ticketmaster.com/event/' + eventId;
 
-      // Load PhantomChecker in iframe
-      loadPhantomFrame();
-
-      // Build section grid from inventory
-      buildSectionGrid(idx);
-    }
-
-    function loadPhantomFrame() {
-      const frame = document.getElementById('pcFrame');
-      const overlay = document.getElementById('pcOverlay');
-
-      // Set iframe src to PhantomChecker live stock page
-      if (frame.src === 'about:blank' || !frame.src.includes('phantomchecker')) {
-        frame.src = PC_URL;
-        // Check if iframe loaded or got blocked
-        frame.onload = function() {
-          try {
-            // If we can access contentDocument, it loaded (same-origin won't apply here)
-            overlay.classList.add('hidden');
-          } catch(e) {
-            // Cross-origin - still loaded in iframe
-            overlay.classList.add('hidden');
-          }
-        };
-        frame.onerror = function() {
-          overlay.querySelector('.pc-overlay-text').textContent = 'Iframe blocked — use the button below';
-        };
-      }
-
-      // Click overlay to also try loading
-      overlay.onclick = function() {
-        frame.src = PC_URL;
-        overlay.classList.add('hidden');
-      };
-    }
-
-    function openPhantomPopup() {
-      const width = 900;
-      const height = 750;
-      const left = window.screenX + window.innerWidth - width - 20;
-      const top = window.screenY + 80;
-
-      // If popup already open, focus it
-      if (pcPopup && !pcPopup.closed) {
-        pcPopup.focus();
-        return;
-      }
-
-      pcPopup = window.open(
-        PC_URL,
-        'phantomLiveStock',
-        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no`
-      );
-
-      if (pcPopup) {
-        toast('PhantomChecker opened — dock it beside this window', 'success');
-      } else {
-        toast('Popup blocked — allow popups for this site', 'error');
-      }
+      // Auto-fetch live stock if we have an event ID
+      if (eventId) fetchLiveStock();
     }
 
     function hideMap() {
       mapVisible = false;
       mapTabIdx = -1;
-      const container = document.getElementById('mainContainer');
-      container.classList.remove('with-map');
+      document.getElementById('mainContainer').classList.remove('with-map');
       document.getElementById('mapCol').style.display = 'none';
-
-      // Reset all toggle buttons
       for (let i = 0; i < NUM_TABS; i++) {
         const btn = document.getElementById('mapToggle' + i);
         if (btn) btn.textContent = 'Live Stock';
       }
     }
 
-    // ============ INTERACTIVE SECTION GRID ============
-    function buildSectionGrid(idx) {
+    // ============ FETCH & RENDER LIVE STOCK ============
+    async function fetchLiveStock() {
+      const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
       const state = tabState[idx];
-      const grid = document.getElementById('sectionGrid');
-      const statsEl = document.getElementById('availStats');
+      const eventId = document.getElementById('eventIdInput' + idx)?.value.trim() || state.reportEventId;
 
-      if (!state.inventoryData.length) {
-        grid.innerHTML = '<div style="text-align:center;padding:20px 0;color:rgba(255,255,255,0.2);font-size:12px;">Import inventory to see sections</div>';
-        statsEl.textContent = '';
+      if (!eventId) { toast('No Event ID to check stock', 'error'); return; }
+
+      const loading = document.getElementById('stockLoading');
+      const content = document.getElementById('stockContent');
+      loading.style.display = 'block';
+      content.innerHTML = '';
+
+      try {
+        const resp = await fetch(SERVER + '/api/stock/' + eventId);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+
+        if (data.error) throw new Error(data.error);
+
+        lastStockData = data;
+        renderStockData(data);
+        toast('Live stock loaded — ' + (data.sectionStock || []).length + ' sections', 'success');
+      } catch (e) {
+        content.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;font-size:12px;">Failed to load stock: ' + e.message + '</div>';
+        toast('Stock fetch failed: ' + e.message, 'error');
+      } finally {
+        loading.style.display = 'none';
+      }
+    }
+
+    function renderStockData(data) {
+      const content = document.getElementById('stockContent');
+      const sections = data.sectionStock || [];
+
+      if (!sections.length) {
+        content.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:12px;">No stock data available</div>';
         return;
       }
 
-      // Aggregate data per section
-      const sections = {};
-      state.inventoryData.forEach(item => {
-        const secName = item.section;
-        if (!sections[secName]) {
-          sections[secName] = {
-            name: secName,
-            zone: getZoneForSection(secName),
-            minPrice: Infinity,
-            maxPrice: -Infinity,
-            totalQty: 0,
-            entries: 0,
-            priorities: new Set(),
-            dominantPriority: ''
-          };
-        }
-        const sec = sections[secName];
-        sec.minPrice = Math.min(sec.minPrice, item.price);
-        sec.maxPrice = Math.max(sec.maxPrice, item.price);
-        sec.totalQty += item.count || 0;
-        sec.entries++;
-        if (item._priority) sec.priorities.add(item._priority);
+      // Calculate totals
+      let totalAvail = 0;
+      let globalMin = Infinity, globalMax = 0;
+      const zoneMap = {};
+
+      sections.forEach(sec => {
+        const avail = Object.values(sec.rowStockDetails || {}).reduce((sum, row) =>
+          sum + Object.values(row.offerAvailability || {}).reduce((s, o) => s + o.availability, 0), 0);
+        sec._totalAvail = avail;
+        totalAvail += avail;
+        if (sec.minPrice < globalMin) globalMin = sec.minPrice;
+        if (sec.maxPrice > globalMax) globalMax = sec.maxPrice;
+
+        const zone = getZoneForSection(sec.sectionName);
+        if (!zoneMap[zone]) zoneMap[zone] = { sections: [], avail: 0, minPrice: Infinity, maxPrice: 0 };
+        zoneMap[zone].sections.push(sec);
+        zoneMap[zone].avail += avail;
+        if (sec.minPrice < zoneMap[zone].minPrice) zoneMap[zone].minPrice = sec.minPrice;
+        if (sec.maxPrice > zoneMap[zone].maxPrice) zoneMap[zone].maxPrice = sec.maxPrice;
       });
 
-      // Determine dominant priority per section
-      for (const sec of Object.values(sections)) {
-        if (sec.priorities.size === 1) {
-          sec.dominantPriority = [...sec.priorities][0];
-        } else if (sec.priorities.size > 1) {
-          // Priority order: 1 > 2 > 3 > avoid
-          const order = ['1', '2', '3', 'avoid'];
-          for (const p of order) {
-            if (sec.priorities.has(p)) { sec.dominantPriority = p; break; }
-          }
-        }
-      }
-
-      // Get global price range for heatmap coloring
-      const allPrices = Object.values(sections).map(s => s.minPrice);
-      const globalMin = Math.min(...allPrices);
-      const globalMax = Math.max(...allPrices);
       const priceRange = globalMax - globalMin || 1;
 
-      // Group by zone
-      const zoneGroups = {};
-      for (const sec of Object.values(sections)) {
-        if (!zoneGroups[sec.zone]) zoneGroups[sec.zone] = [];
-        zoneGroups[sec.zone].push(sec);
-      }
+      // Summary bar
+      let html = '<div class="stock-summary">';
+      html += '<div class="stock-stat"><span class="ss-num">' + totalAvail.toLocaleString() + '</span><span class="ss-label">Total Tickets</span></div>';
+      html += '<div class="stock-stat"><span class="ss-num">' + sections.length + '</span><span class="ss-label">Sections</span></div>';
+      html += '<div class="stock-stat"><span class="ss-num">$' + globalMin.toFixed(0) + '</span><span class="ss-label">Min Price</span></div>';
+      html += '<div class="stock-stat"><span class="ss-num">$' + globalMax.toFixed(0) + '</span><span class="ss-label">Max Price</span></div>';
+      html += '</div>';
 
       // Sort zones
-      const sortedZones = Object.keys(zoneGroups).sort((a, b) => {
-        const aNum = parseInt(a);
-        const bNum = parseInt(b);
+      const sortedZones = Object.keys(zoneMap).sort((a, b) => {
+        const aNum = parseInt(a); const bNum = parseInt(b);
         if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
         if (!isNaN(aNum)) return -1;
         if (!isNaN(bNum)) return 1;
         return a.localeCompare(b);
       });
 
-      // Sort sections within each zone by section name/number
+      // Zone cards
       for (const zone of sortedZones) {
-        zoneGroups[zone].sort((a, b) => {
-          const aNum = parseInt(a.name.match(/\d+/)?.[0] || '0');
-          const bNum = parseInt(b.name.match(/\d+/)?.[0] || '0');
-          if (aNum !== bNum) return aNum - bNum;
-          return a.name.localeCompare(b.name);
+        const zd = zoneMap[zone];
+        // Sort sections by number
+        zd.sections.sort((a, b) => {
+          const an = parseInt(a.sectionName.match(/\d+/)?.[0] || '0');
+          const bn = parseInt(b.sectionName.match(/\d+/)?.[0] || '0');
+          return an - bn || a.sectionName.localeCompare(b.sectionName);
         });
-      }
 
-      // Build HTML
-      let html = '';
-      const totalSections = Object.keys(sections).length;
-      const totalQty = Object.values(sections).reduce((s, sec) => s + sec.totalQty, 0);
+        html += '<div class="stock-zone">';
+        html += '<div class="stock-zone-head">';
+        html += '<span class="stock-zone-name">' + zone + '</span>';
+        html += '<span class="stock-zone-stats"><span class="sz-avail">' + zd.avail.toLocaleString() + ' tix</span> · <span class="sz-price">$' + zd.minPrice.toFixed(0) + '-$' + zd.maxPrice.toFixed(0) + '</span></span>';
+        html += '</div>';
+        html += '<div class="stock-zone-body"><div class="stock-chips">';
 
-      for (const zone of sortedZones) {
-        const zoneSecs = zoneGroups[zone];
-        const zoneQty = zoneSecs.reduce((s, sec) => s + sec.totalQty, 0);
-        const zoneMinPrice = Math.min(...zoneSecs.map(s => s.minPrice));
+        for (const sec of zd.sections) {
+          // Price tier coloring
+          const pctile = (sec.minPrice - globalMin) / priceRange;
+          let tierClass = 'tier-1';
+          if (pctile > 0.75) tierClass = 'tier-4';
+          else if (pctile > 0.5) tierClass = 'tier-3';
+          else if (pctile > 0.25) tierClass = 'tier-2';
 
-        html += '<div class="zone-group">';
-        html += '<div class="zone-group-title"><span>' + zone + '</span><span class="zg-stats">' + zoneSecs.length + ' sec · ' + zoneQty + ' tix · from $' + zoneMinPrice + '</span></div>';
-        html += '<div class="section-chips">';
+          const soldClass = sec._totalAvail === 0 ? ' sc-sold' : '';
+          const rows = Object.keys(sec.rowStockDetails || {});
+          const priceStr = sec.minPrice === sec.maxPrice ? '$' + sec.minPrice.toFixed(0) : '$' + sec.minPrice.toFixed(0) + '-' + sec.maxPrice.toFixed(0);
 
-        for (const sec of zoneSecs) {
-          // Determine chip color class
-          let colorClass = 'cp-none';
-          if (sec.dominantPriority) {
-            colorClass = sec.dominantPriority === 'avoid' ? 'cp-avoid' : 'cp-' + sec.dominantPriority;
-          } else {
-            // Heatmap by price when no priority assigned
-            const pctile = (sec.minPrice - globalMin) / priceRange;
-            if (pctile <= 0.33) colorClass = 'heat-low';
-            else if (pctile <= 0.66) colorClass = 'heat-mid';
-            else colorClass = 'heat-high';
-          }
+          html += '<div class="stock-chip ' + tierClass + soldClass + '" onclick="onStockChipClick(\'' + sec.sectionName.replace(/'/g, "\\'") + '\')">';
+          html += '<span class="sc-avail">' + sec._totalAvail + '</span>';
+          html += '<span class="sc-name">' + sec.sectionName + '</span>';
+          html += '<span class="sc-price">' + priceStr + '</span>';
 
-          // Priority label for tooltip
-          let priLabel = 'Unassigned';
-          let priClass = '';
-          if (sec.dominantPriority) {
-            priLabel = PRIORITY_LABELS[sec.dominantPriority] || sec.dominantPriority;
-            priClass = sec.dominantPriority === 'avoid' ? 'tpavoid' : 'tp' + sec.dominantPriority;
-          }
-
-          const priceDisplay = sec.minPrice === sec.maxPrice ? '$' + sec.minPrice : '$' + sec.minPrice + '-$' + sec.maxPrice;
-
-          html += '<div class="sec-chip ' + colorClass + '" data-section="' + sec.name + '" onclick="onSectionChipClick(\'' + sec.name.replace(/'/g, "\\'") + '\')" title="">';
-          html += '<span class="sec-qty">' + sec.totalQty + '</span>';
-          html += '<span class="sec-name">' + sec.name + '</span>';
-          html += '<span class="sec-price">' + priceDisplay + '</span>';
-
-          // Tooltip
-          html += '<div class="sec-tooltip">';
-          html += '<div class="tt-name">' + sec.name + '</div>';
-          html += '<div class="tt-row">Price: <strong>' + priceDisplay + '</strong></div>';
-          html += '<div class="tt-row">Tickets: <strong>' + sec.totalQty + '</strong> (' + sec.entries + ' listing' + (sec.entries > 1 ? 's' : '') + ')</div>';
-          html += '<div class="tt-row">Zone: <strong>' + sec.zone + '</strong></div>';
-          html += '<div class="tt-priority ' + priClass + '">' + priLabel + '</div>';
+          // Tooltip with row details
+          html += '<div class="sc-tooltip">';
+          html += '<div class="stt-name">Section ' + sec.sectionName + '</div>';
+          html += '<div class="stt-row">Available: <strong>' + sec._totalAvail + ' tickets</strong></div>';
+          html += '<div class="stt-row">Price: <strong>' + priceStr + '</strong></div>';
+          html += '<div class="stt-row">Rows: <strong>' + rows.length + '</strong> (' + rows.slice(0, 8).join(', ') + (rows.length > 8 ? '...' : '') + ')</div>';
           html += '</div>';
 
           html += '</div>';
         }
 
-        html += '</div></div>';
+        html += '</div></div></div>';
       }
 
-      grid.innerHTML = html;
-      statsEl.textContent = totalSections + ' sections · ' + totalQty + ' tickets';
+      content.innerHTML = html;
     }
 
-    function onSectionChipClick(sectionName) {
+    function onStockChipClick(sectionName) {
       const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
-      const state = tabState[idx];
-
-      // Set section filter in the table
       const filterInput = document.getElementById('filterSection' + idx);
       if (filterInput) {
-        // Toggle: if already filtered to this section, clear it
-        if (filterInput.value.trim().toLowerCase() === sectionName.toLowerCase()) {
+        if (filterInput.value.trim() === sectionName) {
           filterInput.value = '';
         } else {
           filterInput.value = sectionName;
@@ -1312,21 +1266,14 @@
         renderInventory(idx);
       }
 
-      // Highlight active chip
-      document.querySelectorAll('.sec-chip').forEach(chip => {
-        chip.classList.toggle('active', chip.dataset.section === sectionName && filterInput.value.trim() !== '');
+      document.querySelectorAll('.stock-chip').forEach(chip => {
+        const name = chip.querySelector('.sc-name')?.textContent;
+        chip.classList.toggle('active', name === sectionName && filterInput?.value.trim() !== '');
       });
-
-      // Scroll to the inventory table
-      const tableWrap = document.querySelector('#inventorySection' + idx + ' .table-wrap');
-      if (tableWrap) tableWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // Refresh section grid when priorities change
     function refreshSectionGrid() {
-      if (mapVisible && mapTabIdx >= 0) {
-        buildSectionGrid(mapTabIdx);
-      }
+      // No-op — stock data is fetched separately now
     }
 
     // ============ TOAST ============
