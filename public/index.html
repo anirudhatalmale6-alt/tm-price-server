@@ -32,7 +32,7 @@
     .container { max-width: 1800px; margin: 0 auto; padding: 20px 24px; }
     .container.with-map { display: flex; gap: 20px; }
     .container.with-map .main-col { flex: 1; min-width: 0; }
-    .container.with-map .map-col { width: 440px; flex-shrink: 0; position: sticky; top: 110px; align-self: flex-start; max-height: calc(100vh - 130px); overflow-y: auto; }
+    .container.with-map .map-col { width: 520px; flex-shrink: 0; position: sticky; top: 110px; align-self: flex-start; max-height: calc(100vh - 130px); overflow-y: auto; }
     .container.with-map .map-col::-webkit-scrollbar { width: 5px; }
     .container.with-map .map-col::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
@@ -41,21 +41,23 @@
     .map-panel .map-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     .map-panel .map-close { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; padding: 0 4px; }
     .map-panel .map-close:hover { color: #ef4444; }
-    .map-panel .map-img-wrap { position: relative; border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.3); min-height: 120px; max-height: 280px; display: flex; align-items: center; justify-content: center; }
-    .map-panel .map-img-wrap img { width: 100%; height: auto; display: block; cursor: zoom-in; }
-    .map-panel .map-img-wrap img.zoomed { cursor: zoom-out; transform: scale(1.8); transform-origin: center center; }
-    .map-panel .map-placeholder { font-size: 12px; color: rgba(255,255,255,0.25); text-align: center; padding: 20px 10px; }
-    .map-panel .map-img-wrap img { max-height: 280px; object-fit: contain; }
-    .map-panel .map-url-row { display: flex; gap: 6px; margin-top: 10px; }
-    .map-panel .map-url-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 11px; outline: none; }
-    .map-panel .map-url-row input::placeholder { color: rgba(255,255,255,0.2); }
-    .map-panel .map-url-row button { padding: 6px 12px; }
     .map-btn-toggle { margin-left: auto; }
 
-    /* View on TM button */
-    .tm-live-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; margin-top: 10px; background: linear-gradient(135deg, #026CDF 0%, #0180FF 100%); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-decoration: none; }
-    .tm-live-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
-    .tm-live-btn .tm-icon { font-size: 16px; }
+    /* PhantomChecker iframe */
+    .pc-frame-wrap { position: relative; border-radius: 8px; overflow: hidden; background: #0a0a1a; height: 500px; border: 1px solid rgba(255,255,255,0.08); }
+    .pc-iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
+    .pc-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); cursor: pointer; transition: opacity 0.2s; }
+    .pc-overlay:hover { background: rgba(0,0,0,0.4); }
+    .pc-overlay.hidden { display: none; }
+    .pc-overlay-text { color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 600; }
+
+    /* Action buttons */
+    .pc-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .pc-btn { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 10px; border: none; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+    .pc-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .pc-btn-primary { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .pc-btn-tm { background: linear-gradient(135deg, #026CDF 0%, #0180FF 100%); }
+    .pc-icon { font-size: 14px; }
 
     /* Section Availability Grid */
     .section-avail { margin-top: 14px; }
@@ -249,7 +251,7 @@
   <div class="topbar">
     <div style="display:flex;align-items:baseline;">
       <h1>TM PRICE ADMIN</h1>
-      <span class="version">v4.0</span>
+      <span class="version">v4.1</span>
     </div>
     <div class="topbar-right">
       <span class="event-count" id="eventCount">0 events</span>
@@ -303,33 +305,38 @@
       </div>
     </div>
 
-    <!-- Map Panel (hidden by default) -->
+    <!-- Live Stock Panel (hidden by default) -->
     <div class="map-col" id="mapCol" style="display:none;">
       <div class="map-panel">
         <div class="map-title">
-          <span>Venue Map</span>
+          <span>Live Stock</span>
           <button class="map-close" onclick="hideMap()">&times;</button>
         </div>
-        <div class="map-img-wrap" id="mapImgWrap">
-          <div class="map-placeholder" id="mapPlaceholder">Loading venue map...</div>
+        <!-- PhantomChecker iframe -->
+        <div class="pc-frame-wrap" id="pcFrameWrap">
+          <iframe id="pcFrame" src="about:blank" class="pc-iframe" allow="clipboard-read; clipboard-write"></iframe>
+          <div class="pc-overlay" id="pcOverlay">
+            <div class="pc-overlay-text">Click to load PhantomChecker Live Stock</div>
+          </div>
         </div>
-        <!-- View Live on TM -->
-        <a class="tm-live-btn" id="tmLiveLink" href="#" target="_blank" style="display:none;">
-          <span class="tm-icon">&#127903;</span> View Live on Ticketmaster
-        </a>
-        <!-- Interactive Section Availability -->
+        <!-- Buttons row -->
+        <div class="pc-actions">
+          <button class="pc-btn pc-btn-primary" onclick="openPhantomPopup()" title="Open in resizable popup window">
+            <span class="pc-icon">&#128301;</span> Open Live Stock
+          </button>
+          <a class="pc-btn pc-btn-tm" id="tmLiveLink" href="#" target="_blank">
+            <span class="pc-icon">&#127903;</span> Ticketmaster
+          </a>
+        </div>
+        <!-- Section Availability from inventory -->
         <div class="section-avail" id="sectionAvail">
           <div class="section-avail-title">
-            <span>Section Availability</span>
+            <span>Inventory Sections</span>
             <span class="avail-stats" id="availStats"></span>
           </div>
           <div id="sectionGrid">
             <div style="text-align:center;padding:20px 0;color:rgba(255,255,255,0.2);font-size:12px;">Import inventory to see sections</div>
           </div>
-        </div>
-        <div class="map-url-row">
-          <input type="text" id="mapUrlInput" placeholder="Paste custom map image URL...">
-          <button class="btn btn-sm btn-blue" onclick="loadCustomMap()">Load</button>
         </div>
       </div>
     </div>
@@ -387,7 +394,7 @@
                 <div class="stat-item"><span class="stat-num" id="statPrices${idx}">0</span> price tiers</div>
               </div>
             </div>
-            <button class="btn btn-sm btn-blue" onclick="toggleMap(${idx})" id="mapToggle${idx}">Show Map</button>
+            <button class="btn btn-sm btn-blue" onclick="toggleMap(${idx})" id="mapToggle${idx}">Live Stock</button>
           </div>
         </div>
 
@@ -1040,9 +1047,11 @@
       }
     }
 
-    // ============ VENUE MAP & SECTION AVAILABILITY ============
+    // ============ LIVE STOCK PANEL (PHANTOMCHECKER) ============
     let mapVisible = false;
     let mapTabIdx = -1;
+    let pcPopup = null;
+    const PC_URL = 'https://phantomchecker.com/dashboard/live-stock';
 
     function toggleMap(idx) {
       if (mapVisible) { hideMap(); return; }
@@ -1061,64 +1070,73 @@
 
       // Update toggle button text
       const btn = document.getElementById('mapToggle' + idx);
-      if (btn) btn.textContent = 'Hide Map';
+      if (btn) btn.textContent = 'Hide Panel';
 
-      // Show TM Live link
+      // Set TM link
       const tmLink = document.getElementById('tmLiveLink');
       if (eventId) {
         tmLink.href = 'https://www.ticketmaster.com/event/' + eventId;
-        tmLink.style.display = 'flex';
-      } else {
-        tmLink.style.display = 'none';
       }
 
-      if (!eventId) {
-        document.getElementById('mapPlaceholder').innerHTML = 'No Event ID — paste a map image URL below<br><span style="font-size:10px;opacity:0.5;">Tip: right-click the TM seating chart &gt; Copy Image Address</span>';
-        document.getElementById('mapPlaceholder').style.display = 'block';
-      } else {
-        // Try multiple TM seating chart sources (direct + proxied + SVG)
-        const directUrl = 'https://mapsapi.tmol.io/maps/geometry/3/event/' + eventId + '/staticImage?type=png&systemId=HOST';
-        const svgUrl = 'https://mapsapi.tmol.io/maps/geometry/3/event/' + eventId + '/staticImage?type=svg&systemId=HOST&sectionLevel=true';
-        const mapUrls = [
-          directUrl,
-          SERVER + '/api/map-proxy?url=' + encodeURIComponent(directUrl),
-          SERVER + '/api/map-proxy?url=' + encodeURIComponent(svgUrl),
-          'https://maps.ticketmaster.com/maps/geometry/3/event/' + eventId + '/staticImage?type=png&systemId=HOST'
-        ];
-        loadMapImage(mapUrls, 0);
-      }
+      // Load PhantomChecker in iframe
+      loadPhantomFrame();
 
-      // Build interactive section grid
+      // Build section grid from inventory
       buildSectionGrid(idx);
     }
 
-    function loadMapImage(urls, index) {
-      if (index >= urls.length) {
-        document.getElementById('mapPlaceholder').innerHTML = 'Could not auto-load venue map.<br><span style="font-size:10px;opacity:0.6;">Tip: Open <strong>View Live on TM</strong> below, right-click the seating chart → <em>Copy Image Address</em>, paste below.</span>';
-        document.getElementById('mapPlaceholder').style.display = 'block';
+    function loadPhantomFrame() {
+      const frame = document.getElementById('pcFrame');
+      const overlay = document.getElementById('pcOverlay');
+
+      // Set iframe src to PhantomChecker live stock page
+      if (frame.src === 'about:blank' || !frame.src.includes('phantomchecker')) {
+        frame.src = PC_URL;
+        // Check if iframe loaded or got blocked
+        frame.onload = function() {
+          try {
+            // If we can access contentDocument, it loaded (same-origin won't apply here)
+            overlay.classList.add('hidden');
+          } catch(e) {
+            // Cross-origin - still loaded in iframe
+            overlay.classList.add('hidden');
+          }
+        };
+        frame.onerror = function() {
+          overlay.querySelector('.pc-overlay-text').textContent = 'Iframe blocked — use the button below';
+        };
+      }
+
+      // Click overlay to also try loading
+      overlay.onclick = function() {
+        frame.src = PC_URL;
+        overlay.classList.add('hidden');
+      };
+    }
+
+    function openPhantomPopup() {
+      const width = 900;
+      const height = 750;
+      const left = window.screenX + window.innerWidth - width - 20;
+      const top = window.screenY + 80;
+
+      // If popup already open, focus it
+      if (pcPopup && !pcPopup.closed) {
+        pcPopup.focus();
         return;
       }
 
-      const wrap = document.getElementById('mapImgWrap');
-      const placeholder = document.getElementById('mapPlaceholder');
+      pcPopup = window.open(
+        PC_URL,
+        'phantomLiveStock',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no`
+      );
 
-      // Remove old image
-      const oldImg = wrap.querySelector('img');
-      if (oldImg) oldImg.remove();
-      placeholder.style.display = 'block';
-      placeholder.textContent = 'Loading venue map...';
-
-      const img = new Image();
-      img.onload = function() {
-        placeholder.style.display = 'none';
-        wrap.appendChild(img);
-        img.onclick = function() { img.classList.toggle('zoomed'); };
-      };
-      img.onerror = function() {
-        loadMapImage(urls, index + 1);
-      };
-      img.src = urls[index];
-      img.style.cssText = 'width:100%;height:auto;display:block;cursor:zoom-in;transition:transform 0.3s;';
+      if (pcPopup) {
+        toast('PhantomChecker opened — dock it beside this window', 'success');
+      } else {
+        toast('Popup blocked — allow popups for this site', 'error');
+      }
     }
 
     function hideMap() {
@@ -1131,33 +1149,8 @@
       // Reset all toggle buttons
       for (let i = 0; i < NUM_TABS; i++) {
         const btn = document.getElementById('mapToggle' + i);
-        if (btn) btn.textContent = 'Show Map';
+        if (btn) btn.textContent = 'Live Stock';
       }
-    }
-
-    function loadCustomMap() {
-      const url = document.getElementById('mapUrlInput').value.trim();
-      if (!url) { toast('Enter a map image URL', 'error'); return; }
-
-      const wrap = document.getElementById('mapImgWrap');
-      const placeholder = document.getElementById('mapPlaceholder');
-      const oldImg = wrap.querySelector('img');
-      if (oldImg) oldImg.remove();
-
-      placeholder.style.display = 'block';
-      placeholder.textContent = 'Loading...';
-
-      const img = new Image();
-      img.onload = function() {
-        placeholder.style.display = 'none';
-        wrap.appendChild(img);
-        img.onclick = function() { img.classList.toggle('zoomed'); };
-      };
-      img.onerror = function() {
-        placeholder.textContent = 'Failed to load image. Check the URL.';
-      };
-      img.src = url;
-      img.style.cssText = 'width:100%;height:auto;display:block;cursor:zoom-in;transition:transform 0.3s;';
     }
 
     // ============ INTERACTIVE SECTION GRID ============
