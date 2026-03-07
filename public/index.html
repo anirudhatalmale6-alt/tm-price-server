@@ -32,7 +32,7 @@
     .container { max-width: 1800px; margin: 0 auto; padding: 20px 24px; }
     .container.with-map { display: flex; gap: 20px; }
     .container.with-map .main-col { flex: 1; min-width: 0; }
-    .container.with-map .map-col { width: 520px; flex-shrink: 0; position: sticky; top: 110px; align-self: flex-start; max-height: calc(100vh - 130px); overflow-y: auto; }
+    .container.with-map .map-col { width: 600px; flex-shrink: 0; position: sticky; top: 110px; align-self: flex-start; max-height: calc(100vh - 130px); overflow-y: auto; }
     .container.with-map .map-col::-webkit-scrollbar { width: 5px; }
     .container.with-map .map-col::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
@@ -42,6 +42,53 @@
     .map-panel .map-close { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; padding: 0 4px; }
     .map-panel .map-close:hover { color: #ef4444; }
     .map-btn-toggle { margin-left: auto; }
+
+    /* Interactive SVG Map */
+    .svg-map-wrap { position: relative; background: #0d1117; border-radius: 8px; overflow: hidden; cursor: grab; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.08); }
+    .svg-map-wrap:active { cursor: grabbing; }
+    .svg-map-wrap svg { width: 100%; height: auto; display: block; }
+    .svg-map-wrap svg path[id] { cursor: pointer; transition: opacity 0.15s, fill 0.15s, stroke 0.15s; }
+    .svg-map-wrap svg path.map-sec-active { opacity: 1 !important; }
+    .svg-map-wrap svg path.map-sec-dimmed { opacity: 0.25 !important; }
+    .svg-map-wrap .map-zoom-controls { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; z-index: 5; }
+    .svg-map-wrap .map-zoom-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(13,17,23,0.85); color: #ccc; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .svg-map-wrap .map-zoom-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .svg-map-nodata { text-align: center; padding: 40px 10px; color: rgba(255,255,255,0.2); font-size: 12px; }
+
+    /* Map section type filter buttons */
+    .map-section-types { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .map-type-btn { padding: 5px 12px; border-radius: 14px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #026CDF; background: rgba(2,108,223,0.1); color: #60a5fa; transition: all 0.15s; }
+    .map-type-btn:hover { background: rgba(2,108,223,0.25); }
+    .map-type-btn.active { background: #026CDF; color: #fff; }
+    .map-type-btn .mtb-count { font-size: 9px; font-weight: 400; margin-left: 2px; opacity: 0.7; }
+
+    /* Filtered Section Detail Panel */
+    .sec-detail { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; margin-bottom: 10px; display: none; }
+    .sec-detail.visible { display: block; }
+    .sec-detail-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .sec-detail-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
+    .sec-detail-total { font-size: 12px; color: #10b981; font-weight: 700; }
+    .sec-detail-name { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .sec-detail-prices { font-size: 14px; margin-bottom: 10px; }
+    .sec-detail-prices .sdp-min { color: #10b981; font-weight: 700; }
+    .sec-detail-prices .sdp-max { color: #e94560; font-weight: 700; }
+    .sec-detail-avail { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+    .sec-detail-rows { max-height: 200px; overflow-y: auto; }
+    .sec-detail-rows::-webkit-scrollbar { width: 4px; }
+    .sec-detail-rows::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .sec-detail-row { font-size: 12px; color: rgba(255,255,255,0.6); padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .sec-detail-row strong { color: #fff; }
+
+    /* Filter by offer */
+    .map-offer-filter { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+    .map-offer-btn { padding: 4px 10px; border-radius: 12px; font-size: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.5); transition: all 0.15s; }
+    .map-offer-btn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+    .map-offer-btn.active { border-color: #10b981; background: rgba(16,185,129,0.1); color: #10b981; }
+
+    /* Price range filter */
+    .map-price-range { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 11px; color: rgba(255,255,255,0.4); }
+    .map-price-range input[type="range"] { flex: 1; accent-color: #10b981; height: 4px; }
+    .map-price-range .mpr-label { min-width: 50px; text-align: right; color: #10b981; font-weight: 700; }
 
     /* Stock loading */
     .stock-loading { text-align: center; padding: 30px 10px; color: rgba(255,255,255,0.3); font-size: 12px; }
@@ -289,7 +336,7 @@
   <div class="topbar">
     <div style="display:flex;align-items:baseline;">
       <h1>TM PRICE ADMIN</h1>
-      <span class="version">v5.0</span>
+      <span class="version">v5.1</span>
     </div>
     <div class="topbar-right">
       <span class="event-count" id="eventCount">0 events</span>
@@ -359,14 +406,57 @@
             <span class="pc-icon">&#127903;</span> Ticketmaster
           </a>
         </div>
-        <!-- Live stock data -->
+        <!-- Interactive SVG Map -->
+        <div class="svg-map-wrap" id="svgMapWrap">
+          <div class="map-zoom-controls">
+            <button class="map-zoom-btn" onclick="mapZoom(1.3)" title="Zoom in">+</button>
+            <button class="map-zoom-btn" onclick="mapZoom(0.77)" title="Zoom out">&minus;</button>
+            <button class="map-zoom-btn" onclick="mapZoom(0)" title="Reset" style="font-size:11px;">&#8634;</button>
+          </div>
+          <div id="svgMapContainer">
+            <div class="map-svg-nodata" style="text-align:center;padding:40px 10px;color:#999;font-size:12px;">Import a report to load venue map</div>
+          </div>
+        </div>
+        <!-- Price Color Legend -->
+        <div id="mapColorLegend" style="display:none;padding:4px 12px;margin-bottom:4px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(255,255,255,0.5);">
+            <span>Price:</span>
+            <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#10b981;"></span><span>Low</span>
+            <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#06b6d4;"></span>
+            <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#3b82f6;"></span>
+            <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#8b5cf6;"></span>
+            <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f59e0b;"></span>
+            <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#ef4444;"></span><span>High</span>
+            <span style="margin-left:8px;display:inline-block;width:12px;height:12px;border-radius:3px;background:#ec4899;border:1px solid #fff;"></span><span>Selected</span>
+          </div>
+        </div>
+        <!-- Section Type Filter Buttons -->
+        <div class="map-section-types" id="mapSectionTypes"></div>
+        <!-- Filtered Section Detail -->
+        <div class="sec-detail" id="secDetail">
+          <div class="sec-detail-head">
+            <span class="sec-detail-title">Filtered Sections</span>
+            <span class="sec-detail-total" id="secDetailTotal"></span>
+          </div>
+          <div id="secDetailBody"></div>
+        </div>
+        <!-- Filter by Offer -->
+        <div class="map-offer-filter" id="mapOfferFilter"></div>
+        <!-- Price Range -->
+        <div class="map-price-range" id="mapPriceRange" style="display:none;">
+          <span>$</span>
+          <span id="priceRangeMin">0</span>
+          <input type="range" id="priceRangeSlider" min="0" max="1000" value="1000" oninput="onPriceRangeChange(this.value)">
+          <span class="mpr-label" id="priceRangeLabel">$1000</span>
+        </div>
+        <!-- Live stock data (zone chips) -->
         <div id="stockContainer">
           <div class="stock-loading" id="stockLoading" style="display:none;">
             <div class="spinner"></div>
             <div>Fetching live stock from Ticketmaster...</div>
           </div>
           <div id="stockContent">
-            <div style="text-align:center;padding:30px 10px;color:rgba(255,255,255,0.15);font-size:12px;">Import a report to auto-load live stock</div>
+            <div style="text-align:center;padding:20px 10px;color:rgba(255,255,255,0.15);font-size:12px;">Import a report to auto-load live stock</div>
           </div>
         </div>
       </div>
@@ -1108,8 +1198,11 @@
       const tmLink = document.getElementById('tmLiveLink');
       if (eventId) tmLink.href = 'https://www.ticketmaster.com/event/' + eventId;
 
-      // Auto-fetch live stock if we have an event ID
-      if (eventId) fetchLiveStock();
+      // Auto-fetch live stock + map if we have an event ID
+      if (eventId) {
+        fetchVenueMap(eventId);
+        fetchLiveStock();
+      }
     }
 
     function hideMap() {
@@ -1121,6 +1214,436 @@
         const btn = document.getElementById('mapToggle' + i);
         if (btn) btn.textContent = 'Live Stock';
       }
+    }
+
+    // ============ INTERACTIVE SVG MAP ============
+    let mapScale = 1;
+    let mapTranslateX = 0, mapTranslateY = 0;
+    let selectedSection = null;
+    let activeZoneFilter = null;
+    let activePriceMax = Infinity;
+    let svgMapLoaded = false;
+
+    async function fetchVenueMap(eventId) {
+      const container = document.getElementById('svgMapContainer');
+      container.innerHTML = '<div style="text-align:center;padding:30px;color:#999;font-size:12px;"><div class="spinner" style="display:inline-block;width:20px;height:20px;border:2px solid #ccc;border-top-color:#026CDF;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:8px;"></div><br>Loading venue map...</div>';
+
+      try {
+        const resp = await fetch(SERVER + '/api/map/' + eventId);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const svgText = await resp.text();
+
+        if (!svgText.includes('<svg')) throw new Error('Invalid SVG');
+
+        container.innerHTML = svgText;
+        svgMapLoaded = true;
+        mapScale = 1; mapTranslateX = 0; mapTranslateY = 0;
+
+        // Style SVG for dark theme and attach handlers
+        const svg = container.querySelector('svg');
+        if (svg) {
+          svg.style.width = '100%';
+          svg.style.height = 'auto';
+
+          // Make SVG background transparent and text readable on dark
+          svg.querySelectorAll('rect').forEach(r => {
+            if (r.getAttribute('fill') === 'rgb(255,255,255)' || r.getAttribute('fill') === '#ffffff' || r.getAttribute('fill') === 'white') {
+              r.setAttribute('fill', 'transparent');
+            }
+          });
+          svg.querySelectorAll('text').forEach(t => {
+            const fill = t.getAttribute('fill');
+            if (!fill || fill === '#000000' || fill === 'rgb(0,0,0)' || fill === 'black') {
+              t.setAttribute('fill', 'rgba(255,255,255,0.85)');
+            }
+          });
+          // Dim structural elements (POCHE, INACTIVE, etc.)
+          svg.querySelectorAll('g[id]').forEach(g => {
+            const gid = g.getAttribute('id') || '';
+            if (/^(POCHE|INACTIVE|ISM)/i.test(gid)) {
+              g.setAttribute('opacity', '0.2');
+            }
+          });
+
+          // Attach click/hover handlers to numeric section paths
+          svg.querySelectorAll('path[id]').forEach(path => {
+            const id = path.getAttribute('id');
+            if (/^\d+$/.test(id)) {
+              path.style.cursor = 'pointer';
+              path.addEventListener('click', () => onMapSectionClick(id));
+              path.addEventListener('mouseenter', () => onMapSectionHover(id, true));
+              path.addEventListener('mouseleave', () => onMapSectionHover(id, false));
+            }
+          });
+        }
+
+        // Color sections if stock data already loaded
+        if (lastStockData) colorMapSections();
+
+        toast('Venue map loaded', 'info');
+      } catch (e) {
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.2);font-size:11px;">Map unavailable<br><span style="font-size:10px;opacity:0.5;">' + e.message + '</span></div>';
+        svgMapLoaded = false;
+      }
+    }
+
+    function colorMapSections() {
+      if (!lastStockData || !svgMapLoaded) return;
+      const sections = lastStockData.sectionStock || [];
+      const stockMap = {};
+      let globalMin = Infinity, globalMax = 0;
+
+      sections.forEach(sec => {
+        const avail = Object.values(sec.rowStockDetails || {}).reduce((sum, row) =>
+          sum + Object.values(row.offerAvailability || {}).reduce((s, o) => s + o.availability, 0), 0);
+        sec._totalAvail = avail;
+        stockMap[sec.sectionName] = sec;
+        if (sec.minPrice < globalMin) globalMin = sec.minPrice;
+        if (sec.maxPrice > globalMax) globalMax = sec.maxPrice;
+      });
+
+      const priceRange = globalMax - globalMin || 1;
+      const svg = document.querySelector('#svgMapContainer svg');
+      if (!svg) return;
+
+      // Use a 6-tier color scale for better differentiation
+      const colorScale = [
+        '#10b981', // emerald - cheapest
+        '#06b6d4', // cyan
+        '#3b82f6', // blue
+        '#8b5cf6', // violet
+        '#f59e0b', // amber
+        '#ef4444'  // red - most expensive
+      ];
+
+      svg.querySelectorAll('path[id]').forEach(path => {
+        const id = path.getAttribute('id');
+        if (!/^\d+$/.test(id)) return;
+
+        const sec = stockMap[id];
+        if (sec && sec._totalAvail > 0) {
+          // Map price to 0-5 tier index using equal-width bins
+          const pctile = (sec.minPrice - globalMin) / priceRange;
+          const tierIdx = Math.min(Math.floor(pctile * colorScale.length), colorScale.length - 1);
+          path.setAttribute('fill', colorScale[tierIdx]);
+          path.setAttribute('fill-opacity', '0.85');
+          path.setAttribute('stroke', colorScale[tierIdx]);
+          path.setAttribute('stroke-opacity', '1');
+          path.setAttribute('stroke-width', '8');
+          path.setAttribute('data-has-stock', '1');
+        } else if (sec) {
+          // Sold out
+          path.setAttribute('fill', '#374151');
+          path.setAttribute('fill-opacity', '0.4');
+          path.setAttribute('stroke', '#4b5563');
+          path.setAttribute('stroke-width', '3');
+          path.setAttribute('data-has-stock', '0');
+        } else {
+          // No data
+          path.setAttribute('fill', '#1f2937');
+          path.setAttribute('fill-opacity', '0.3');
+          path.setAttribute('stroke', '#374151');
+          path.setAttribute('stroke-width', '3');
+          path.setAttribute('data-has-stock', '0');
+        }
+      });
+
+      // Show color legend
+      document.getElementById('mapColorLegend').style.display = 'block';
+      // Build section type buttons
+      buildSectionTypeButtons(sections);
+      // Build offer filter
+      buildOfferFilter(sections);
+      // Setup price range
+      setupPriceRange(globalMin, globalMax);
+    }
+
+    function onMapSectionClick(sectionId) {
+      // Toggle selection
+      if (selectedSection === sectionId) {
+        selectedSection = null;
+        clearSectionHighlight();
+        document.getElementById('secDetail').classList.remove('visible');
+        // Also clear inventory filter
+        const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
+        const filterInput = document.getElementById('filterSection' + idx);
+        if (filterInput) { filterInput.value = ''; renderInventory(idx); }
+        return;
+      }
+
+      selectedSection = sectionId;
+      highlightSection(sectionId);
+      showSectionDetail(sectionId);
+
+      // Filter inventory table
+      const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
+      const filterInput = document.getElementById('filterSection' + idx);
+      if (filterInput) { filterInput.value = sectionId; renderInventory(idx); }
+    }
+
+    function onMapSectionHover(sectionId, entering) {
+      const svg = document.querySelector('#svgMapContainer svg');
+      if (!svg) return;
+      const path = svg.querySelector('path[id="' + sectionId + '"]');
+      if (!path) return;
+
+      if (entering) {
+        if (selectedSection !== sectionId) {
+          path.setAttribute('fill-opacity', '1');
+          path.setAttribute('stroke', '#ffffff');
+          path.setAttribute('stroke-width', '40');
+        }
+        showMapTooltip(sectionId, path);
+      } else {
+        if (selectedSection !== sectionId) {
+          path.setAttribute('fill-opacity', '0.85');
+          // Restore stroke from colorMapSections
+          const sec = lastStockData ? (lastStockData.sectionStock || []).find(s => s.sectionName === sectionId) : null;
+          if (sec) {
+            const fill = path.getAttribute('fill');
+            path.setAttribute('stroke', fill);
+            path.setAttribute('stroke-width', '8');
+          }
+        }
+        hideMapTooltip();
+      }
+    }
+
+    let mapTooltipEl = null;
+    function showMapTooltip(sectionId, pathEl) {
+      if (!lastStockData) return;
+      const sec = (lastStockData.sectionStock || []).find(s => s.sectionName === sectionId);
+      if (!sec) return;
+
+      if (!mapTooltipEl) {
+        mapTooltipEl = document.createElement('div');
+        mapTooltipEl.style.cssText = 'position:absolute;background:#1a1a35;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;z-index:50;pointer-events:none;font-size:11px;color:#fff;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+        document.getElementById('svgMapWrap').appendChild(mapTooltipEl);
+      }
+
+      const rows = Object.keys(sec.rowStockDetails || {});
+      const priceStr = sec.minPrice === sec.maxPrice ? '$' + sec.minPrice.toFixed(0) : '$' + sec.minPrice.toFixed(0) + '-$' + sec.maxPrice.toFixed(0);
+      mapTooltipEl.innerHTML = '<div style="font-weight:800;font-size:13px;">Section ' + sectionId + '</div>'
+        + '<div style="color:#10b981;">' + (sec._totalAvail || 0) + ' tickets · ' + rows.length + ' rows</div>'
+        + '<div style="color:#facc15;">' + priceStr + '</div>';
+      mapTooltipEl.style.display = 'block';
+
+      // Position near the path
+      const wrap = document.getElementById('svgMapWrap');
+      const svg = wrap.querySelector('svg');
+      const bbox = pathEl.getBBox();
+      const svgRect = svg.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      const scaleX = svgRect.width / svg.viewBox.baseVal.width;
+      const scaleY = svgRect.height / svg.viewBox.baseVal.height;
+      const x = (bbox.x + bbox.width / 2) * scaleX - wrapRect.left + svgRect.left;
+      const y = bbox.y * scaleY - wrapRect.top + svgRect.top - 10;
+      mapTooltipEl.style.left = Math.min(Math.max(x - 60, 0), wrap.clientWidth - 160) + 'px';
+      mapTooltipEl.style.top = Math.max(y - 50, 0) + 'px';
+    }
+
+    function hideMapTooltip() {
+      if (mapTooltipEl) mapTooltipEl.style.display = 'none';
+    }
+
+    function highlightSection(sectionId) {
+      clearSectionHighlight();
+      const svg = document.querySelector('#svgMapContainer svg');
+      if (!svg) return;
+      svg.querySelectorAll('path[id]').forEach(path => {
+        const id = path.getAttribute('id');
+        if (!/^\d+$/.test(id)) return;
+        if (id === sectionId) {
+          path.classList.add('map-sec-active');
+          path.setAttribute('fill', '#ec4899');
+          path.setAttribute('fill-opacity', '0.9');
+          path.setAttribute('stroke', '#ffffff');
+          path.setAttribute('stroke-width', '50');
+          path.setAttribute('stroke-opacity', '1');
+        } else {
+          path.classList.add('map-sec-dimmed');
+          path.setAttribute('fill-opacity', '0.25');
+        }
+      });
+    }
+
+    function clearSectionHighlight() {
+      const svg = document.querySelector('#svgMapContainer svg');
+      if (!svg) return;
+      // Re-color all sections normally
+      if (lastStockData) colorMapSections();
+    }
+
+    function showSectionDetail(sectionId) {
+      if (!lastStockData) return;
+      const sec = (lastStockData.sectionStock || []).find(s => s.sectionName === sectionId);
+      const detailEl = document.getElementById('secDetail');
+      const bodyEl = document.getElementById('secDetailBody');
+      const totalEl = document.getElementById('secDetailTotal');
+
+      if (!sec) {
+        detailEl.classList.remove('visible');
+        return;
+      }
+
+      detailEl.classList.add('visible');
+      totalEl.textContent = 'Total: ' + (sec._totalAvail || 0);
+
+      const priceStr = 'Min <span class="sdp-min">$' + sec.minPrice.toFixed(2) + '</span> - Max <span class="sdp-max">$' + sec.maxPrice.toFixed(2) + '</span>';
+
+      let html = '<div class="sec-detail-name">Sec: ' + sectionId + '</div>';
+      html += '<div class="sec-detail-prices">' + priceStr + '</div>';
+      html += '<div class="sec-detail-avail">Available: ' + (sec._totalAvail || 0) + '</div>';
+
+      // Row-level pricing breakdown
+      const rows = sec.rowStockDetails || {};
+      const rowEntries = Object.entries(rows).sort((a, b) => {
+        const an = parseInt(a[0]) || a[0].charCodeAt(0);
+        const bn = parseInt(b[0]) || b[0].charCodeAt(0);
+        return an - bn;
+      });
+
+      // Group rows by price for cleaner display
+      const priceGroups = {};
+      rowEntries.forEach(([rowName, rowData]) => {
+        const price = rowData.minPrice.toFixed(2);
+        if (!priceGroups[price]) priceGroups[price] = [];
+        priceGroups[price].push(rowName);
+      });
+
+      html += '<div class="sec-detail-rows">';
+      Object.entries(priceGroups).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0])).forEach(([price, rowNames]) => {
+        const rowStr = rowNames.length > 3
+          ? rowNames.slice(0, 2).join(', ') + ', ' + rowNames[rowNames.length - 1]
+          : rowNames.join(', ');
+        html += '<div class="sec-detail-row">Row ' + rowStr + ': <strong>$' + price + '</strong></div>';
+      });
+      html += '</div>';
+
+      bodyEl.innerHTML = html;
+    }
+
+    function buildSectionTypeButtons(sections) {
+      const types = {};
+      sections.forEach(sec => {
+        const zone = getZoneForSection(sec.sectionName);
+        if (!types[zone]) types[zone] = 0;
+        types[zone]++;
+      });
+
+      const container = document.getElementById('mapSectionTypes');
+      let html = '';
+      const sortedTypes = Object.keys(types).sort((a, b) => {
+        const an = parseInt(a); const bn = parseInt(b);
+        if (!isNaN(an) && !isNaN(bn)) return an - bn;
+        if (!isNaN(an)) return -1;
+        if (!isNaN(bn)) return 1;
+        return a.localeCompare(b);
+      });
+
+      for (const type of sortedTypes) {
+        html += '<button class="map-type-btn" onclick="filterMapByType(\'' + type + '\')">' + type + '<span class="mtb-count">(' + types[type] + ')</span></button>';
+      }
+      container.innerHTML = html;
+    }
+
+    function filterMapByType(type) {
+      // Toggle
+      if (activeZoneFilter === type) {
+        activeZoneFilter = null;
+      } else {
+        activeZoneFilter = type;
+      }
+
+      // Update button states
+      document.querySelectorAll('.map-type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(type) && activeZoneFilter === type);
+      });
+
+      applyMapFilters();
+    }
+
+    function buildOfferFilter(sections) {
+      const offers = new Set();
+      sections.forEach(sec => {
+        Object.values(sec.offerAvailability || {}).forEach(offer => {
+          if (offer.offerName) offers.add(offer.offerName);
+        });
+      });
+
+      const container = document.getElementById('mapOfferFilter');
+      if (offers.size <= 1) { container.innerHTML = ''; return; }
+
+      let html = '<span style="font-size:10px;color:rgba(255,255,255,0.3);margin-right:4px;">Filter by Offer:</span>';
+      offers.forEach(name => {
+        html += '<button class="map-offer-btn" onclick="this.classList.toggle(\'active\');applyMapFilters()">' + name + '</button>';
+      });
+      container.innerHTML = html;
+    }
+
+    function setupPriceRange(min, max) {
+      const container = document.getElementById('mapPriceRange');
+      if (max <= min) { container.style.display = 'none'; return; }
+      container.style.display = 'flex';
+      const slider = document.getElementById('priceRangeSlider');
+      slider.min = Math.floor(min);
+      slider.max = Math.ceil(max);
+      slider.value = Math.ceil(max);
+      document.getElementById('priceRangeMin').textContent = Math.floor(min);
+      document.getElementById('priceRangeLabel').textContent = '$' + Math.ceil(max);
+      activePriceMax = max;
+    }
+
+    function onPriceRangeChange(val) {
+      activePriceMax = parseFloat(val);
+      document.getElementById('priceRangeLabel').textContent = '$' + Math.round(val);
+      applyMapFilters();
+    }
+
+    function applyMapFilters() {
+      if (!lastStockData || !svgMapLoaded) return;
+      const svg = document.querySelector('#svgMapContainer svg');
+      if (!svg) return;
+
+      const sections = lastStockData.sectionStock || [];
+      const stockMap = {};
+      sections.forEach(sec => { stockMap[sec.sectionName] = sec; });
+
+      svg.querySelectorAll('path[id]').forEach(path => {
+        const id = path.getAttribute('id');
+        if (!/^\d+$/.test(id)) return;
+
+        const sec = stockMap[id];
+        let visible = true;
+
+        // Zone filter
+        if (activeZoneFilter && sec) {
+          const zone = getZoneForSection(sec.sectionName);
+          if (zone !== activeZoneFilter) visible = false;
+        }
+
+        // Price filter
+        if (sec && sec.minPrice > activePriceMax) visible = false;
+
+        path.style.opacity = visible ? '' : '0.08';
+        path.style.pointerEvents = visible ? '' : 'none';
+      });
+    }
+
+    function mapZoom(factor) {
+      const svg = document.querySelector('#svgMapContainer svg');
+      if (!svg) return;
+
+      if (factor === 0) {
+        // Reset
+        mapScale = 1; mapTranslateX = 0; mapTranslateY = 0;
+      } else {
+        mapScale *= factor;
+        mapScale = Math.max(0.5, Math.min(mapScale, 4));
+      }
+
+      svg.style.transform = 'scale(' + mapScale + ') translate(' + mapTranslateX + 'px,' + mapTranslateY + 'px)';
+      svg.style.transformOrigin = 'center center';
     }
 
     // ============ FETCH & RENDER LIVE STOCK ============
@@ -1145,6 +1668,8 @@
 
         lastStockData = data;
         renderStockData(data);
+        // Color the SVG map with stock data
+        colorMapSections();
         toast('Live stock loaded — ' + (data.sectionStock || []).length + ' sections', 'success');
       } catch (e) {
         content.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;font-size:12px;">Failed to load stock: ' + e.message + '</div>';
@@ -1206,7 +1731,6 @@
       // Zone cards
       for (const zone of sortedZones) {
         const zd = zoneMap[zone];
-        // Sort sections by number
         zd.sections.sort((a, b) => {
           const an = parseInt(a.sectionName.match(/\d+/)?.[0] || '0');
           const bn = parseInt(b.sectionName.match(/\d+/)?.[0] || '0');
@@ -1221,7 +1745,6 @@
         html += '<div class="stock-zone-body"><div class="stock-chips">';
 
         for (const sec of zd.sections) {
-          // Price tier coloring
           const pctile = (sec.minPrice - globalMin) / priceRange;
           let tierClass = 'tier-1';
           if (pctile > 0.75) tierClass = 'tier-4';
@@ -1236,15 +1759,12 @@
           html += '<span class="sc-avail">' + sec._totalAvail + '</span>';
           html += '<span class="sc-name">' + sec.sectionName + '</span>';
           html += '<span class="sc-price">' + priceStr + '</span>';
-
-          // Tooltip with row details
           html += '<div class="sc-tooltip">';
           html += '<div class="stt-name">Section ' + sec.sectionName + '</div>';
           html += '<div class="stt-row">Available: <strong>' + sec._totalAvail + ' tickets</strong></div>';
           html += '<div class="stt-row">Price: <strong>' + priceStr + '</strong></div>';
           html += '<div class="stt-row">Rows: <strong>' + rows.length + '</strong> (' + rows.slice(0, 8).join(', ') + (rows.length > 8 ? '...' : '') + ')</div>';
           html += '</div>';
-
           html += '</div>';
         }
 
@@ -1255,14 +1775,16 @@
     }
 
     function onStockChipClick(sectionName) {
+      // Also highlight on SVG map
+      if (svgMapLoaded) {
+        onMapSectionClick(sectionName);
+        return;
+      }
       const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
       const filterInput = document.getElementById('filterSection' + idx);
       if (filterInput) {
-        if (filterInput.value.trim() === sectionName) {
-          filterInput.value = '';
-        } else {
-          filterInput.value = sectionName;
-        }
+        if (filterInput.value.trim() === sectionName) filterInput.value = '';
+        else filterInput.value = sectionName;
         renderInventory(idx);
       }
 

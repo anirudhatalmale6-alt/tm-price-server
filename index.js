@@ -192,23 +192,98 @@ async function getPCToken() {
   }
 }
 
+// Helper: call PC API with auto-retry on 401
+async function pcApiCall(url, options = {}) {
+  let token = await getPCToken();
+  let resp = await fetch(url, {
+    ...options,
+    headers: { ...options.headers, 'Authorization': `Bearer ${token}` }
+  });
+  // If 401, force re-login and retry once
+  if (resp.status === 401) {
+    pcToken = null; pcTokenExpiry = 0; pcRefreshToken = null;
+    token = await getPCToken();
+    resp = await fetch(url, {
+      ...options,
+      headers: { ...options.headers, 'Authorization': `Bearer ${token}` }
+    });
+  }
+  return resp;
+}
+
 // Get live stock data for a TM event
 app.get('/api/stock/:eventId', async (req, res) => {
   const { eventId } = req.params;
   try {
-    const token = await getPCToken();
-    const resp = await fetch(`${PC_API}/sites/ticketmaster/stock-info`, {
+    const resp = await pcApiCall(`${PC_API}/sites/ticketmaster/stock-info`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ eventId })
     });
     if (!resp.ok) throw new Error('PC API returned ' + resp.status);
     const data = await resp.json();
     res.json(data);
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// SVG map cache (in-memory, keyed by eventId)
+const mapCache = new Map();
+
+// Get venue SVG map for a TM event (proxied through PhantomChecker)
+app.get('/api/map/:eventId', async (req, res) => {
+  const { eventId } = req.params;
+
+  // Check cache first
+  if (mapCache.has(eventId)) {
+    console.log(`[MAP] Cache hit for ${eventId}`);
+    return res.type('image/svg+xml').send(mapCache.get(eventId));
+  }
+
+  try {
+    // Construct event-based mapsapi URL
+    const mapUrl = `https://mapsapi.tmol.io/maps/geometry/3/event/${eventId}/staticImage?type=svg&systemId=HOST&sectionLevel=true&avertaFonts=true`;
+    const encodedUrl = encodeURIComponent(mapUrl);
+
+    const resp = await pcApiCall(`${PC_API}/sites/ticketmaster/map-image?query=${encodedUrl}`, {
+      method: 'GET'
+    });
+
+    if (!resp.ok) {
+      // Try numeric ID approach as fallback - fetch via PC map endpoint
+      console.log(`[MAP] Event-based URL failed (${resp.status}), trying map endpoint...`);
+      const mapResp = await pcApiCall(`${PC_API}/sites/ticketmaster/map`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: `https://www.ticketmaster.com/event/${eventId}` })
+      });
+      const mapData = await mapResp.json();
+      if (mapData.event_map && mapData.event_map.mapUrl) {
+        const numericUrl = `https://mapsapi.tmol.io/maps/geometry/image/${mapData.event_map.mapUrl}?removeFilters=ISM_Shadow&avertaFonts=true&app=PRV`;
+        const numericResp = await pcApiCall(`${PC_API}/sites/ticketmaster/map-image?query=${encodeURIComponent(numericUrl)}`, {
+          method: 'GET'
+        });
+        if (numericResp.ok) {
+          const b64 = await numericResp.text();
+          const svg = Buffer.from(b64.replace(/^"|"$/g, ''), 'base64').toString('utf8');
+          mapCache.set(eventId, svg);
+          return res.type('image/svg+xml').send(svg);
+        }
+      }
+      throw new Error('Map not available (status ' + resp.status + ')');
+    }
+
+    const b64 = await resp.text();
+    const svg = Buffer.from(b64.replace(/^"|"$/g, ''), 'base64').toString('utf8');
+
+    // Cache the SVG
+    mapCache.set(eventId, svg);
+    console.log(`[MAP] Cached SVG for ${eventId} (${svg.length} chars)`);
+
+    res.type('image/svg+xml').send(svg);
+  } catch (e) {
+    console.log(`[MAP] Error for ${eventId}:`, e.message);
     res.status(500).json({ error: e.message });
   }
 });
