@@ -231,7 +231,8 @@ app.get('/api/stock/:eventId', async (req, res) => {
 // SVG map cache (in-memory, keyed by eventId)
 const mapCache = new Map();
 
-// Get venue SVG map for a TM event (proxied through PhantomChecker)
+// Get venue SVG map for a TM event
+// Strategy: 1) Wayback Machine proxy  2) PhantomChecker  3) 404 (frontend generates chart)
 app.get('/api/map/:eventId', async (req, res) => {
   const { eventId } = req.params;
 
@@ -241,51 +242,53 @@ app.get('/api/map/:eventId', async (req, res) => {
     return res.type('image/svg+xml').send(mapCache.get(eventId));
   }
 
-  try {
-    // Construct event-based mapsapi URL
-    const mapUrl = `https://mapsapi.tmol.io/maps/geometry/3/event/${eventId}/staticImage?type=svg&systemId=HOST&sectionLevel=true&avertaFonts=true`;
-    const encodedUrl = encodeURIComponent(mapUrl);
+  const mapUrl = `https://mapsapi.tmol.io/maps/geometry/3/event/${eventId}/staticImage?type=svg&systemId=HOST&sectionLevel=true&avertaFonts=true`;
 
-    const resp = await pcApiCall(`${PC_API}/sites/ticketmaster/map-image?query=${encodedUrl}`, {
+  // Strategy 1: Wayback Machine proxy (bypasses PerimeterX)
+  try {
+    console.log(`[MAP] Trying Wayback Machine for ${eventId}...`);
+    const wbResp = await fetch(`https://web.archive.org/web/0id_/${mapUrl}`, {
+      headers: { 'Accept-Encoding': 'gzip, deflate, br' },
+      redirect: 'follow',
+      timeout: 15000
+    });
+    if (wbResp.ok) {
+      const svg = await wbResp.text();
+      if (svg.includes('<svg') && svg.length > 1000) {
+        mapCache.set(eventId, svg);
+        console.log(`[MAP] Wayback hit for ${eventId} (${svg.length} chars)`);
+        return res.type('image/svg+xml').send(svg);
+      }
+    }
+    console.log(`[MAP] Wayback miss for ${eventId} (${wbResp.status})`);
+  } catch (e) {
+    console.log(`[MAP] Wayback error: ${e.message}`);
+  }
+
+  // Strategy 2: PhantomChecker proxy
+  try {
+    console.log(`[MAP] Trying PhantomChecker for ${eventId}...`);
+    const resp = await pcApiCall(`${PC_API}/sites/ticketmaster/map-image?query=${encodeURIComponent(mapUrl)}`, {
       method: 'GET'
     });
-
-    if (!resp.ok) {
-      // Try numeric ID approach as fallback - fetch via PC map endpoint
-      console.log(`[MAP] Event-based URL failed (${resp.status}), trying map endpoint...`);
-      const mapResp = await pcApiCall(`${PC_API}/sites/ticketmaster/map`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: `https://www.ticketmaster.com/event/${eventId}` })
-      });
-      const mapData = await mapResp.json();
-      if (mapData.event_map && mapData.event_map.mapUrl) {
-        const numericUrl = `https://mapsapi.tmol.io/maps/geometry/image/${mapData.event_map.mapUrl}?removeFilters=ISM_Shadow&avertaFonts=true&app=PRV`;
-        const numericResp = await pcApiCall(`${PC_API}/sites/ticketmaster/map-image?query=${encodeURIComponent(numericUrl)}`, {
-          method: 'GET'
-        });
-        if (numericResp.ok) {
-          const b64 = await numericResp.text();
-          const svg = Buffer.from(b64.replace(/^"|"$/g, ''), 'base64').toString('utf8');
-          mapCache.set(eventId, svg);
-          return res.type('image/svg+xml').send(svg);
-        }
+    if (resp.ok) {
+      const b64 = await resp.text();
+      const svg = Buffer.from(b64.replace(/^"|"$/g, ''), 'base64').toString('utf8');
+      // Validate it's a real SVG (not "lol" or garbage)
+      if (svg.includes('<svg') && svg.length > 1000 && !svg.includes('>lol<')) {
+        mapCache.set(eventId, svg);
+        console.log(`[MAP] PC hit for ${eventId} (${svg.length} chars)`);
+        return res.type('image/svg+xml').send(svg);
       }
-      throw new Error('Map not available (status ' + resp.status + ')');
+      console.log(`[MAP] PC returned invalid SVG for ${eventId}`);
     }
-
-    const b64 = await resp.text();
-    const svg = Buffer.from(b64.replace(/^"|"$/g, ''), 'base64').toString('utf8');
-
-    // Cache the SVG
-    mapCache.set(eventId, svg);
-    console.log(`[MAP] Cached SVG for ${eventId} (${svg.length} chars)`);
-
-    res.type('image/svg+xml').send(svg);
   } catch (e) {
-    console.log(`[MAP] Error for ${eventId}:`, e.message);
-    res.status(500).json({ error: e.message });
+    console.log(`[MAP] PC error: ${e.message}`);
   }
+
+  // No SVG available - return 404 so frontend uses generated chart
+  console.log(`[MAP] No SVG available for ${eventId}`);
+  res.status(404).json({ error: 'Map not available', fallback: 'generated' });
 });
 
 // Pre-warm PC token on startup

@@ -55,6 +55,18 @@
     .svg-map-wrap .map-zoom-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
     .svg-map-nodata { text-align: center; padding: 40px 10px; color: rgba(255,255,255,0.2); font-size: 12px; }
 
+    /* Generated section chart (fallback when SVG unavailable) */
+    .gen-chart { padding: 8px; }
+    .gen-stage { text-align: center; background: #1e293b; color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 700; letter-spacing: 3px; padding: 8px; border-radius: 6px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
+    .gen-zone-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 4px 2px; }
+    .gen-zone-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+    .gen-sec { width: 56px; padding: 5px 3px; border-radius: 6px; text-align: center; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+    .gen-sec:hover { border-color: rgba(255,255,255,0.4); }
+    .gen-sec.gen-sec-selected { border: 2px solid #ec4899 !important; box-shadow: 0 0 12px rgba(236,72,153,0.5); transform: scale(1.1); z-index: 10; }
+    .gen-sec-name { font-size: 11px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .gen-sec-avail { font-size: 9px; color: rgba(255,255,255,0.8); }
+    .gen-sec-price { font-size: 8px; color: rgba(255,255,255,0.6); }
+
     /* Map section type filter buttons */
     .map-section-types { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
     .map-type-btn { padding: 5px 12px; border-radius: 14px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #026CDF; background: rgba(2,108,223,0.1); color: #60a5fa; transition: all 0.15s; }
@@ -702,7 +714,7 @@
         if (titleMatch) eventName = titleMatch[1].replace(/<[^>]+>/g, '').trim();
         state.eventName = eventName;
 
-        const tmLinkMatch = html.match(/ticketmaster\.com\/[^"]*\/event\/([A-Z0-9]+)/i);
+        const tmLinkMatch = html.match(/ticketmaster\.com\/(?:[^"]*\/)?event\/([A-Z0-9]+)/i);
         if (tmLinkMatch) {
           state.reportEventId = tmLinkMatch[1];
           document.getElementById('eventIdInput' + idx).value = state.reportEventId;
@@ -1223,6 +1235,7 @@
     let activeZoneFilter = null;
     let activePriceMax = Infinity;
     let svgMapLoaded = false;
+    let svgMapMode = ''; // 'real' or 'generated'
 
     async function fetchVenueMap(eventId) {
       const container = document.getElementById('svgMapContainer');
@@ -1230,13 +1243,13 @@
 
       try {
         const resp = await fetch(SERVER + '/api/map/' + eventId);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        if (!resp.ok) throw new Error('no-svg');
         const svgText = await resp.text();
-
-        if (!svgText.includes('<svg')) throw new Error('Invalid SVG');
+        if (!svgText.includes('<svg') || svgText.length < 1000) throw new Error('no-svg');
 
         container.innerHTML = svgText;
         svgMapLoaded = true;
+        svgMapMode = 'real';
         mapScale = 1; mapTranslateX = 0; mapTranslateY = 0;
 
         // Style SVG for dark theme and attach handlers
@@ -1244,8 +1257,6 @@
         if (svg) {
           svg.style.width = '100%';
           svg.style.height = 'auto';
-
-          // Make SVG background transparent and text readable on dark
           svg.querySelectorAll('rect').forEach(r => {
             if (r.getAttribute('fill') === 'rgb(255,255,255)' || r.getAttribute('fill') === '#ffffff' || r.getAttribute('fill') === 'white') {
               r.setAttribute('fill', 'transparent');
@@ -1257,15 +1268,10 @@
               t.setAttribute('fill', 'rgba(255,255,255,0.85)');
             }
           });
-          // Dim structural elements (POCHE, INACTIVE, etc.)
           svg.querySelectorAll('g[id]').forEach(g => {
             const gid = g.getAttribute('id') || '';
-            if (/^(POCHE|INACTIVE|ISM)/i.test(gid)) {
-              g.setAttribute('opacity', '0.2');
-            }
+            if (/^(POCHE|INACTIVE|ISM)/i.test(gid)) g.setAttribute('opacity', '0.2');
           });
-
-          // Attach click/hover handlers to numeric section paths
           svg.querySelectorAll('path[id]').forEach(path => {
             const id = path.getAttribute('id');
             if (/^\d+$/.test(id)) {
@@ -1276,15 +1282,142 @@
             }
           });
         }
-
-        // Color sections if stock data already loaded
         if (lastStockData) colorMapSections();
-
         toast('Venue map loaded', 'info');
       } catch (e) {
-        container.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.2);font-size:11px;">Map unavailable<br><span style="font-size:10px;opacity:0.5;">' + e.message + '</span></div>';
+        // No SVG available — build generated section grid from stock data
+        console.log('SVG map unavailable, will generate chart from stock data');
         svgMapLoaded = false;
+        svgMapMode = 'generated';
+        if (lastStockData) {
+          buildGeneratedChart();
+        } else {
+          container.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:11px;">Loading stock data to build chart...</div>';
+        }
       }
+    }
+
+    // Generate an interactive section grid chart from stock data (fallback when SVG unavailable)
+    function buildGeneratedChart() {
+      const container = document.getElementById('svgMapContainer');
+      if (!lastStockData || !lastStockData.sectionStock) {
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:11px;">No stock data to build chart</div>';
+        return;
+      }
+
+      const sections = lastStockData.sectionStock;
+      let globalMin = Infinity, globalMax = 0;
+      sections.forEach(sec => {
+        const avail = Object.values(sec.rowStockDetails || {}).reduce((sum, row) =>
+          sum + Object.values(row.offerAvailability || {}).reduce((s, o) => s + o.availability, 0), 0);
+        sec._totalAvail = avail;
+        if (sec.minPrice < globalMin) globalMin = sec.minPrice;
+        if (sec.maxPrice > globalMax) globalMax = sec.maxPrice;
+      });
+      const priceRange = globalMax - globalMin || 1;
+
+      const colorScale = ['#10b981','#06b6d4','#3b82f6','#8b5cf6','#f59e0b','#ef4444'];
+
+      // Group sections by zone
+      const zones = {};
+      sections.forEach(sec => {
+        const zone = getZoneForSection(sec.sectionName);
+        if (!zones[zone]) zones[zone] = [];
+        zones[zone].push(sec);
+      });
+
+      // Sort zones
+      const sortedZones = Object.keys(zones).sort((a, b) => {
+        const an = parseInt(a); const bn = parseInt(b);
+        if (!isNaN(an) && !isNaN(bn)) return an - bn;
+        if (!isNaN(an)) return -1;
+        if (!isNaN(bn)) return 1;
+        return a.localeCompare(b);
+      });
+
+      // Build the grid chart HTML
+      let html = '<div class="gen-chart">';
+      html += '<div class="gen-stage">STAGE</div>';
+
+      for (const zone of sortedZones) {
+        const secs = zones[zone].sort((a, b) => {
+          const an = parseInt(a.sectionName.match(/\d+/)?.[0] || '0');
+          const bn = parseInt(b.sectionName.match(/\d+/)?.[0] || '0');
+          return an - bn || a.sectionName.localeCompare(b.sectionName);
+        });
+
+        html += '<div class="gen-zone-label">' + zone + '</div>';
+        html += '<div class="gen-zone-grid">';
+
+        for (const sec of secs) {
+          const pctile = (sec.minPrice - globalMin) / priceRange;
+          const tierIdx = Math.min(Math.floor(pctile * colorScale.length), colorScale.length - 1);
+          const color = sec._totalAvail > 0 ? colorScale[tierIdx] : '#374151';
+          const opacity = sec._totalAvail > 0 ? '1' : '0.4';
+          const rows = Object.keys(sec.rowStockDetails || {}).length;
+
+          html += '<div class="gen-sec" data-section="' + sec.sectionName + '" style="background:' + color + ';opacity:' + opacity + ';" '
+            + 'onclick="onMapSectionClick(\'' + sec.sectionName + '\')" '
+            + 'onmouseenter="onGenSecHover(this,\'' + sec.sectionName + '\',true)" '
+            + 'onmouseleave="onGenSecHover(this,\'' + sec.sectionName + '\',false)">'
+            + '<div class="gen-sec-name">' + sec.sectionName + '</div>'
+            + '<div class="gen-sec-avail">' + (sec._totalAvail || 0) + '</div>'
+            + '<div class="gen-sec-price">$' + sec.minPrice.toFixed(0) + '</div>'
+            + '</div>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+
+      container.innerHTML = html;
+      svgMapLoaded = true; // treat as loaded for filter purposes
+
+      // Show legend
+      document.getElementById('mapColorLegend').style.display = 'block';
+      buildSectionTypeButtons(sections);
+      buildOfferFilter(sections);
+      setupPriceRange(globalMin, globalMax);
+
+      toast('Section chart loaded — ' + sections.length + ' sections', 'info');
+    }
+
+    function onGenSecHover(el, sectionId, entering) {
+      if (entering) {
+        el.style.transform = 'scale(1.15)';
+        el.style.zIndex = '10';
+        el.style.boxShadow = '0 0 12px rgba(255,255,255,0.4)';
+        showGenTooltip(el, sectionId);
+      } else {
+        el.style.transform = '';
+        el.style.zIndex = '';
+        el.style.boxShadow = '';
+        hideMapTooltip();
+      }
+    }
+
+    function showGenTooltip(el, sectionId) {
+      if (!lastStockData) return;
+      const sec = (lastStockData.sectionStock || []).find(s => s.sectionName === sectionId);
+      if (!sec) return;
+
+      if (!mapTooltipEl) {
+        mapTooltipEl = document.createElement('div');
+        mapTooltipEl.style.cssText = 'position:absolute;background:#1a1a35;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;z-index:50;pointer-events:none;font-size:11px;color:#fff;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+        document.getElementById('svgMapWrap').appendChild(mapTooltipEl);
+      }
+
+      const rows = Object.keys(sec.rowStockDetails || {});
+      const priceStr = sec.minPrice === sec.maxPrice ? '$' + sec.minPrice.toFixed(0) : '$' + sec.minPrice.toFixed(0) + '-$' + sec.maxPrice.toFixed(0);
+      mapTooltipEl.innerHTML = '<div style="font-weight:800;font-size:13px;">Section ' + sectionId + '</div>'
+        + '<div style="color:#10b981;">' + (sec._totalAvail || 0) + ' tickets · ' + rows.length + ' rows</div>'
+        + '<div style="color:#facc15;">' + priceStr + '</div>';
+      mapTooltipEl.style.display = 'block';
+
+      const wrap = document.getElementById('svgMapWrap');
+      const rect = el.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      mapTooltipEl.style.left = Math.min(Math.max(rect.left - wrapRect.left, 0), wrap.clientWidth - 160) + 'px';
+      mapTooltipEl.style.top = Math.max(rect.top - wrapRect.top - 55, 0) + 'px';
     }
 
     function colorMapSections() {
@@ -1448,30 +1581,47 @@
 
     function highlightSection(sectionId) {
       clearSectionHighlight();
-      const svg = document.querySelector('#svgMapContainer svg');
-      if (!svg) return;
-      svg.querySelectorAll('path[id]').forEach(path => {
-        const id = path.getAttribute('id');
-        if (!/^\d+$/.test(id)) return;
-        if (id === sectionId) {
-          path.classList.add('map-sec-active');
-          path.setAttribute('fill', '#ec4899');
-          path.setAttribute('fill-opacity', '0.9');
-          path.setAttribute('stroke', '#ffffff');
-          path.setAttribute('stroke-width', '50');
-          path.setAttribute('stroke-opacity', '1');
-        } else {
-          path.classList.add('map-sec-dimmed');
-          path.setAttribute('fill-opacity', '0.25');
-        }
-      });
+      if (svgMapMode === 'generated') {
+        // Highlight in generated chart
+        document.querySelectorAll('.gen-sec').forEach(el => {
+          if (el.dataset.section === sectionId) {
+            el.classList.add('gen-sec-selected');
+          } else {
+            el.style.opacity = '0.3';
+          }
+        });
+      } else {
+        const svg = document.querySelector('#svgMapContainer svg');
+        if (!svg) return;
+        svg.querySelectorAll('path[id]').forEach(path => {
+          const id = path.getAttribute('id');
+          if (!/^\d+$/.test(id)) return;
+          if (id === sectionId) {
+            path.classList.add('map-sec-active');
+            path.setAttribute('fill', '#ec4899');
+            path.setAttribute('fill-opacity', '0.9');
+            path.setAttribute('stroke', '#ffffff');
+            path.setAttribute('stroke-width', '50');
+            path.setAttribute('stroke-opacity', '1');
+          } else {
+            path.classList.add('map-sec-dimmed');
+            path.setAttribute('fill-opacity', '0.25');
+          }
+        });
+      }
     }
 
     function clearSectionHighlight() {
-      const svg = document.querySelector('#svgMapContainer svg');
-      if (!svg) return;
-      // Re-color all sections normally
-      if (lastStockData) colorMapSections();
+      if (svgMapMode === 'generated') {
+        document.querySelectorAll('.gen-sec').forEach(el => {
+          el.classList.remove('gen-sec-selected');
+          el.style.opacity = '';
+        });
+      } else {
+        const svg = document.querySelector('#svgMapContainer svg');
+        if (!svg) return;
+        if (lastStockData) colorMapSections();
+      }
     }
 
     function showSectionDetail(sectionId) {
@@ -1602,32 +1752,39 @@
 
     function applyMapFilters() {
       if (!lastStockData || !svgMapLoaded) return;
-      const svg = document.querySelector('#svgMapContainer svg');
-      if (!svg) return;
 
       const sections = lastStockData.sectionStock || [];
       const stockMap = {};
       sections.forEach(sec => { stockMap[sec.sectionName] = sec; });
 
-      svg.querySelectorAll('path[id]').forEach(path => {
-        const id = path.getAttribute('id');
-        if (!/^\d+$/.test(id)) return;
-
-        const sec = stockMap[id];
-        let visible = true;
-
-        // Zone filter
-        if (activeZoneFilter && sec) {
-          const zone = getZoneForSection(sec.sectionName);
-          if (zone !== activeZoneFilter) visible = false;
-        }
-
-        // Price filter
-        if (sec && sec.minPrice > activePriceMax) visible = false;
-
-        path.style.opacity = visible ? '' : '0.08';
-        path.style.pointerEvents = visible ? '' : 'none';
-      });
+      if (svgMapMode === 'generated') {
+        // Filter generated chart tiles
+        document.querySelectorAll('.gen-sec').forEach(el => {
+          const secName = el.dataset.section;
+          const sec = stockMap[secName];
+          let visible = true;
+          if (activeZoneFilter && sec) {
+            if (getZoneForSection(sec.sectionName) !== activeZoneFilter) visible = false;
+          }
+          if (sec && sec.minPrice > activePriceMax) visible = false;
+          el.style.display = visible ? '' : 'none';
+        });
+      } else {
+        const svg = document.querySelector('#svgMapContainer svg');
+        if (!svg) return;
+        svg.querySelectorAll('path[id]').forEach(path => {
+          const id = path.getAttribute('id');
+          if (!/^\d+$/.test(id)) return;
+          const sec = stockMap[id];
+          let visible = true;
+          if (activeZoneFilter && sec) {
+            if (getZoneForSection(sec.sectionName) !== activeZoneFilter) visible = false;
+          }
+          if (sec && sec.minPrice > activePriceMax) visible = false;
+          path.style.opacity = visible ? '' : '0.08';
+          path.style.pointerEvents = visible ? '' : 'none';
+        });
+      }
     }
 
     function mapZoom(factor) {
@@ -1668,8 +1825,12 @@
 
         lastStockData = data;
         renderStockData(data);
-        // Color the SVG map with stock data
-        colorMapSections();
+        // Color SVG map or build generated chart
+        if (svgMapMode === 'generated') {
+          buildGeneratedChart();
+        } else {
+          colorMapSections();
+        }
         toast('Live stock loaded — ' + (data.sectionStock || []).length + ' sections', 'success');
       } catch (e) {
         content.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;font-size:12px;">Failed to load stock: ' + e.message + '</div>';
