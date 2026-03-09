@@ -140,6 +140,52 @@
     .stock-chip.tier-3 { background: rgba(234,179,8,0.12); border-color: rgba(234,179,8,0.3); color: #facc15; }
     .stock-chip.tier-4 { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171; }
 
+    /* ===== PhantomChecker-style Filtered Sections List ===== */
+    .fs-panel { border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-top: 10px; }
+    .fs-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .fs-header-title { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px; }
+    .fs-header-count { font-size: 11px; color: #10b981; font-weight: 700; }
+    .fs-search { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .fs-search input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 11px; outline: none; }
+    .fs-search input:focus { border-color: rgba(16,185,129,0.5); }
+    .fs-search input::placeholder { color: rgba(255,255,255,0.2); }
+    .fs-sort-bar { display: flex; gap: 2px; padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); }
+    .fs-sort-btn { flex: 1; padding: 4px 6px; background: none; border: none; color: rgba(255,255,255,0.4); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; text-align: center; border-radius: 4px; }
+    .fs-sort-btn:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.04); }
+    .fs-sort-btn.active { color: #10b981; background: rgba(16,185,129,0.08); }
+    .fs-list { max-height: 500px; overflow-y: auto; }
+    .fs-list::-webkit-scrollbar { width: 5px; }
+    .fs-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* Section row in filtered list */
+    .fs-item { border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s; }
+    .fs-item:hover { background: rgba(255,255,255,0.04); }
+    .fs-item.fs-selected { background: rgba(236,72,153,0.08); border-left: 3px solid #ec4899; }
+    .fs-item-head { display: flex; align-items: center; padding: 8px 12px; gap: 10px; }
+    .fs-item-sec { font-size: 14px; font-weight: 800; color: #fff; min-width: 48px; }
+    .fs-item-prices { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+    .fs-item-price-row { font-size: 10px; color: rgba(255,255,255,0.5); }
+    .fs-item-price-row .fp-val { font-weight: 700; }
+    .fs-item-price-row .fp-min { color: #10b981; }
+    .fs-item-price-row .fp-max { color: #f59e0b; }
+    .fs-item-avail { text-align: right; min-width: 36px; }
+    .fs-item-avail-num { font-size: 14px; font-weight: 800; color: #10b981; display: block; text-align: center; }
+    .fs-item-avail-label { font-size: 8px; color: rgba(255,255,255,0.3); text-transform: uppercase; display: block; text-align: center; }
+    .fs-item-avail-num.sold { color: #ef4444; }
+
+    /* Expanded row detail within a section */
+    .fs-item-detail { display: none; padding: 0 12px 10px 12px; }
+    .fs-item.fs-expanded .fs-item-detail { display: block; }
+    .fs-item-expand { font-size: 10px; color: rgba(255,255,255,0.3); transition: transform 0.2s; }
+    .fs-item.fs-expanded .fs-item-expand { transform: rotate(90deg); color: #ec4899; }
+    .fs-row-table { width: 100%; border-collapse: collapse; }
+    .fs-row-table th { text-align: left; font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.35); text-transform: uppercase; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .fs-row-table td { font-size: 11px; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); color: rgba(255,255,255,0.7); }
+    .fs-row-table tr:hover { background: rgba(255,255,255,0.03); }
+    .fs-row-table .fsr-price { color: #10b981; font-weight: 700; font-family: 'Courier New', monospace; }
+    .fs-row-table .fsr-avail { color: #facc15; font-weight: 600; text-align: center; }
+    .fs-row-table .fsr-row-name { font-weight: 700; color: #fff; }
+
     /* Action buttons */
     .pc-actions { display: flex; gap: 6px; margin-top: 10px; margin-bottom: 10px; }
     .pc-btn { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 8px; border: none; border-radius: 8px; color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-decoration: none; }
@@ -348,7 +394,7 @@
   <div class="topbar">
     <div style="display:flex;align-items:baseline;">
       <h1>TM PRICE ADMIN</h1>
-      <span class="version">v5.1</span>
+      <span class="version">v5.2</span>
     </div>
     <div class="topbar-right">
       <span class="event-count" id="eventCount">0 events</span>
@@ -461,6 +507,24 @@
           <input type="range" id="priceRangeSlider" min="0" max="1000" value="1000" oninput="onPriceRangeChange(this.value)">
           <span class="mpr-label" id="priceRangeLabel">$1000</span>
         </div>
+        <!-- Filtered Sections (PhantomChecker style) -->
+        <div class="fs-panel" id="filteredSectionsPanel" style="display:none;">
+          <div class="fs-header">
+            <span class="fs-header-title">Filtered Sections</span>
+            <span class="fs-header-count" id="fsCount">0 sections</span>
+          </div>
+          <div class="fs-search">
+            <input type="text" id="fsSearchInput" placeholder="Search sections..." oninput="filterSectionsList()">
+          </div>
+          <div class="fs-sort-bar">
+            <button class="fs-sort-btn active" data-sort="section" onclick="sortSectionsList('section',this)">Section</button>
+            <button class="fs-sort-btn" data-sort="minPrice" onclick="sortSectionsList('minPrice',this)">Min $</button>
+            <button class="fs-sort-btn" data-sort="maxPrice" onclick="sortSectionsList('maxPrice',this)">Max $</button>
+            <button class="fs-sort-btn" data-sort="avail" onclick="sortSectionsList('avail',this)">Avail</button>
+          </div>
+          <div class="fs-list" id="fsList"></div>
+        </div>
+
         <!-- Live stock data (zone chips) -->
         <div id="stockContainer">
           <div class="stock-loading" id="stockLoading" style="display:none;">
@@ -1495,16 +1559,20 @@
       // Toggle selection
       if (selectedSection === sectionId) {
         selectedSection = null;
+        fsExpandedSection = null;
         clearSectionHighlight();
         document.getElementById('secDetail').classList.remove('visible');
         // Also clear inventory filter
         const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
         const filterInput = document.getElementById('filterSection' + idx);
         if (filterInput) { filterInput.value = ''; renderInventory(idx); }
+        // Update filtered sections list
+        filterSectionsList();
         return;
       }
 
       selectedSection = sectionId;
+      fsExpandedSection = sectionId;
       highlightSection(sectionId);
       showSectionDetail(sectionId);
 
@@ -1512,6 +1580,13 @@
       const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
       const filterInput = document.getElementById('filterSection' + idx);
       if (filterInput) { filterInput.value = sectionId; renderInventory(idx); }
+
+      // Update filtered sections list & scroll to section
+      filterSectionsList();
+      setTimeout(() => {
+        const item = document.querySelector('.fs-item[data-section="' + sectionId + '"]');
+        if (item) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
     }
 
     function onMapSectionHover(sectionId, entering) {
@@ -1785,6 +1860,9 @@
           path.style.pointerEvents = visible ? '' : 'none';
         });
       }
+
+      // Also re-filter the sections list
+      filterSectionsList();
     }
 
     function mapZoom(factor) {
@@ -1831,6 +1909,8 @@
         } else {
           colorMapSections();
         }
+        // Build PhantomChecker-style filtered sections list
+        buildFilteredSections();
         toast('Live stock loaded — ' + (data.sectionStock || []).length + ' sections', 'success');
       } catch (e) {
         content.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;font-size:12px;">Failed to load stock: ' + e.message + '</div>';
@@ -1838,6 +1918,169 @@
       } finally {
         loading.style.display = 'none';
       }
+    }
+
+    // ============ FILTERED SECTIONS (PHANTOMCHECKER STYLE) ============
+    let fsSortField = 'section';
+    let fsSortAsc = true;
+    let fsExpandedSection = null;
+
+    function buildFilteredSections() {
+      if (!lastStockData || !lastStockData.sectionStock || !lastStockData.sectionStock.length) {
+        document.getElementById('filteredSectionsPanel').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('filteredSectionsPanel').style.display = 'block';
+      filterSectionsList();
+    }
+
+    function getFilteredSortedSections() {
+      if (!lastStockData) return [];
+      const sections = lastStockData.sectionStock || [];
+      const query = (document.getElementById('fsSearchInput')?.value || '').trim().toLowerCase();
+
+      let filtered = sections.filter(sec => {
+        if (query && !sec.sectionName.toLowerCase().includes(query)) return false;
+        // Respect zone filter from map
+        if (activeZoneFilter && getZoneForSection(sec.sectionName) !== activeZoneFilter) return false;
+        // Respect price filter
+        if (sec.minPrice > activePriceMax) return false;
+        return true;
+      });
+
+      // Sort
+      filtered.sort((a, b) => {
+        let va, vb;
+        if (fsSortField === 'section') {
+          const an = parseInt(a.sectionName.match(/\d+/)?.[0] || '0');
+          const bn = parseInt(b.sectionName.match(/\d+/)?.[0] || '0');
+          va = an || a.sectionName.charCodeAt(0);
+          vb = bn || b.sectionName.charCodeAt(0);
+        } else if (fsSortField === 'minPrice') {
+          va = a.minPrice; vb = b.minPrice;
+        } else if (fsSortField === 'maxPrice') {
+          va = a.maxPrice; vb = b.maxPrice;
+        } else if (fsSortField === 'avail') {
+          va = a._totalAvail || 0; vb = b._totalAvail || 0;
+        }
+        return fsSortAsc ? va - vb : vb - va;
+      });
+
+      return filtered;
+    }
+
+    function filterSectionsList() {
+      const filtered = getFilteredSortedSections();
+      const totalAvail = filtered.reduce((s, sec) => s + (sec._totalAvail || 0), 0);
+      document.getElementById('fsCount').textContent = filtered.length + ' sections · ' + totalAvail.toLocaleString() + ' tix';
+      renderFilteredSectionsList(filtered);
+    }
+
+    function sortSectionsList(field, btn) {
+      if (fsSortField === field) {
+        fsSortAsc = !fsSortAsc;
+      } else {
+        fsSortField = field;
+        fsSortAsc = true;
+      }
+      document.querySelectorAll('.fs-sort-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      filterSectionsList();
+    }
+
+    function renderFilteredSectionsList(sections) {
+      const list = document.getElementById('fsList');
+      let html = '';
+
+      sections.forEach(sec => {
+        const isSelected = selectedSection === sec.sectionName;
+        const isExpanded = fsExpandedSection === sec.sectionName;
+        const avail = sec._totalAvail || 0;
+        const minP = sec.minPrice.toFixed(2);
+        const maxP = sec.maxPrice.toFixed(2);
+        const rows = sec.rowStockDetails || {};
+        const rowEntries = Object.entries(rows).sort((a, b) => {
+          // Natural sort: numeric rows first, then alpha
+          const an = parseInt(a[0]); const bn = parseInt(b[0]);
+          if (!isNaN(an) && !isNaN(bn)) return an - bn;
+          if (!isNaN(an)) return -1;
+          if (!isNaN(bn)) return 1;
+          return a[0].localeCompare(b[0]);
+        });
+
+        html += '<div class="fs-item' + (isSelected ? ' fs-selected' : '') + (isExpanded ? ' fs-expanded' : '') + '" data-section="' + sec.sectionName + '">';
+        html += '<div class="fs-item-head" onclick="onFsSectionClick(\'' + sec.sectionName.replace(/'/g, "\\'") + '\')">';
+        html += '<span class="fs-item-expand">&#9654;</span>';
+        html += '<span class="fs-item-sec">' + sec.sectionName + '</span>';
+        html += '<div class="fs-item-prices">';
+        html += '<div class="fs-item-price-row">Min: <span class="fp-val fp-min">$' + minP + '</span></div>';
+        html += '<div class="fs-item-price-row">Max: <span class="fp-val fp-max">$' + maxP + '</span></div>';
+        html += '</div>';
+        html += '<div class="fs-item-avail">';
+        html += '<span class="fs-item-avail-num' + (avail === 0 ? ' sold' : '') + '">' + avail + '</span>';
+        html += '<span class="fs-item-avail-label">avail</span>';
+        html += '</div>';
+        html += '</div>';
+
+        // Expanded detail: row-by-row pricing table
+        html += '<div class="fs-item-detail">';
+        if (rowEntries.length > 0) {
+          html += '<table class="fs-row-table">';
+          html += '<thead><tr><th>Row</th><th>Price</th><th style="text-align:center">Avail</th><th>Offer</th></tr></thead>';
+          html += '<tbody>';
+          rowEntries.forEach(([rowName, rowData]) => {
+            const offers = rowData.offerAvailability || {};
+            const offerEntries = Object.entries(offers);
+            if (offerEntries.length === 0) {
+              // Single row with just price
+              html += '<tr>';
+              html += '<td class="fsr-row-name">' + rowName + '</td>';
+              html += '<td class="fsr-price">$' + (rowData.minPrice || 0).toFixed(2) + '</td>';
+              html += '<td class="fsr-avail">-</td>';
+              html += '<td>-</td>';
+              html += '</tr>';
+            } else {
+              offerEntries.forEach(([offerId, offer], i) => {
+                html += '<tr>';
+                html += '<td class="fsr-row-name">' + (i === 0 ? rowName : '') + '</td>';
+                html += '<td class="fsr-price">$' + (offer.price || rowData.minPrice || 0).toFixed(2) + '</td>';
+                html += '<td class="fsr-avail">' + (offer.availability || 0) + '</td>';
+                html += '<td style="font-size:10px;color:rgba(255,255,255,0.4);">' + (offer.offerName || offerId).substring(0, 20) + '</td>';
+                html += '</tr>';
+              });
+            }
+          });
+          html += '</tbody></table>';
+        } else {
+          html += '<div style="padding:8px;color:rgba(255,255,255,0.3);font-size:11px;">No row data available</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+      });
+
+      list.innerHTML = html;
+    }
+
+    function onFsSectionClick(sectionName) {
+      // Toggle expand
+      if (fsExpandedSection === sectionName) {
+        fsExpandedSection = null;
+      } else {
+        fsExpandedSection = sectionName;
+      }
+
+      // Also trigger map highlight + inventory filter
+      onMapSectionClick(sectionName);
+
+      // Re-render list to update expanded state
+      filterSectionsList();
+
+      // Scroll the expanded item into view
+      setTimeout(() => {
+        const item = document.querySelector('.fs-item[data-section="' + sectionName + '"]');
+        if (item) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
     }
 
     function renderStockData(data) {
