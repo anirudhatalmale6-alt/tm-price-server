@@ -460,6 +460,9 @@
           <button class="pc-btn pc-btn-refresh" onclick="fetchLiveStock()">
             <span class="pc-icon">&#8635;</span> Refresh Stock
           </button>
+          <button class="pc-btn pc-btn-refresh" onclick="fetchLiveStock('tm')" style="background:linear-gradient(135deg,#0ea5e9,#3b82f6);">
+            <span class="pc-icon">&#127903;</span> TM Prices
+          </button>
           <a class="pc-btn pc-btn-tm" id="tmLiveLink" href="#" target="_blank">
             <span class="pc-icon">&#127903;</span> Ticketmaster
           </a>
@@ -1933,7 +1936,7 @@
     }
 
     // ============ FETCH & RENDER LIVE STOCK ============
-    async function fetchLiveStock() {
+    async function fetchLiveStock(source) {
       const idx = mapTabIdx >= 0 ? mapTabIdx : activeTab;
       const state = tabState[idx];
       const eventId = document.getElementById('eventIdInput' + idx)?.value.trim() || state.reportEventId;
@@ -1946,7 +1949,10 @@
       content.innerHTML = '';
 
       try {
-        const resp = await fetch(SERVER + '/api/stock/' + eventId);
+        const apiUrl = source === 'tm'
+          ? SERVER + '/api/tm-stock/' + eventId
+          : SERVER + '/api/stock/' + eventId;
+        const resp = await fetch(apiUrl);
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
 
@@ -1954,15 +1960,52 @@
 
         lastStockData = data;
         renderStockData(data);
+
+        // If TM direct source, also import into inventory table for accurate prices
+        if (source === 'tm' && data.inventory && data.inventory.length) {
+          state.inventoryData = data.inventory.map((t, i) => ({
+            section: t.section,
+            price: t.price,
+            count: t.count,
+            row: t.rows,
+            type: t.type,
+            offer: t.offer || t.type,
+            _priority: '',
+            _checked: false,
+            _idx: i
+          }));
+          state.reportEventId = eventId;
+          document.getElementById('eventIdInput' + idx).value = eventId;
+          document.getElementById('eventName' + idx).textContent = 'TM Direct — Event ' + eventId;
+          document.getElementById('eventMeta' + idx).textContent = 'Real TM prices';
+          document.getElementById('statEntries' + idx).textContent = state.inventoryData.length;
+          document.getElementById('statTickets' + idx).textContent = state.inventoryData.reduce((s, t) => s + (t.count || 0), 0).toLocaleString();
+          const uniquePrices = [...new Set(state.inventoryData.map(t => t.price))].sort((a, b) => a - b);
+          document.getElementById('statPrices' + idx).textContent = uniquePrices.length;
+          document.getElementById('eventInfo' + idx).style.display = 'block';
+          const filterPrice = document.getElementById('filterPrice' + idx);
+          filterPrice.innerHTML = '<option value="">All prices ($' + uniquePrices[0] + ' — $' + uniquePrices[uniquePrices.length - 1] + ')</option>';
+          uniquePrices.forEach(p => { filterPrice.innerHTML += '<option value="' + p + '">$' + p + '</option>'; });
+          document.getElementById('eventIdCard' + idx).style.display = 'block';
+          document.getElementById('inventorySection' + idx).style.display = 'block';
+          detectZones(idx);
+          buildZoneBar(idx);
+          buildQuickBar(idx);
+          updateSortArrows(idx);
+          renderInventory(idx);
+          updateTabLabel(idx);
+        }
+
         // Color SVG map or build generated chart
         if (svgMapMode === 'generated') {
           buildGeneratedChart();
         } else {
           colorMapSections();
         }
-        // Build PhantomChecker-style filtered sections list
+        // Build filtered sections list
         buildFilteredSections();
-        toast('Live stock loaded — ' + (data.sectionStock || []).length + ' sections', 'success');
+        const sourceLabel = source === 'tm' ? 'TM Direct' : 'PhantomChecker';
+        toast(sourceLabel + ' stock loaded — ' + (data.sectionStock || []).length + ' sections', 'success');
       } catch (e) {
         content.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;font-size:12px;">Failed to load stock: ' + e.message + '</div>';
         toast('Stock fetch failed: ' + e.message, 'error');

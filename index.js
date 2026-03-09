@@ -228,6 +228,98 @@ app.get('/api/stock/:eventId', async (req, res) => {
   }
 });
 
+// Get live stock data directly from TM API (real prices)
+const TM_API_KEY = 'b462oi7fic6pehcdkzony5bxhe';
+const TM_API_SECRET = 'pquzpfrfz7zd2ylvtz3w5dtyse';
+
+app.get('/api/tm-stock/:eventId', async (req, res) => {
+  const { eventId } = req.params;
+  const siteType = req.query.site || 'ticketmaster';
+  try {
+    const facetsUrl = `https://services.${siteType}.com/api/ismds/event/${eventId}/facets?show=count+row+listpricerange+places+maxQuantity+sections+shape&q=available&apikey=${TM_API_KEY}&apisecret=${TM_API_SECRET}&resaleChannelId=internal.ecommerce.consumer.desktop.web.browser.${siteType}.us`;
+    const typesUrl = `https://services.${siteType}.com/api/ismds/host/${eventId}/tickettypes?apikey=${TM_API_KEY}&apisecret=${TM_API_SECRET}`;
+
+    const [facetsResp, typesResp] = await Promise.all([
+      fetch(facetsUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }),
+      fetch(typesUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } })
+    ]);
+
+    if (!facetsResp.ok) throw new Error('TM facets API returned ' + facetsResp.status);
+    const facetsData = await facetsResp.json();
+    const typesData = typesResp.ok ? await typesResp.json() : null;
+
+    // Transform to same format as PhantomChecker for admin compatibility
+    const sectionStock = {};
+    const inventory = [];
+
+    if (facetsData.facets) {
+      for (const ticket of facetsData.facets) {
+        if (!ticket.available) continue;
+
+        let ticketType = 'Standard';
+        if (typesData && typesData._embedded) {
+          try {
+            const td = typesData._embedded.item.find(i => i.ticketTypeId === ticket.ticketTypes[0]);
+            if (td) {
+              const name = td.name;
+              if (name.toLowerCase().includes('resale') || (ticket.inventoryTypes && ticket.inventoryTypes[0] !== 'primary')) {
+                ticketType = 'Resale';
+              } else if (name.toLowerCase().includes('platinum')) {
+                ticketType = 'Official Platinum';
+              } else {
+                ticketType = name;
+              }
+            }
+          } catch(e) {}
+        }
+
+        const section = ticket.section || 'Unknown';
+        const price = ticket.listPriceRange && ticket.listPriceRange.length ? ticket.listPriceRange[0].min : 0;
+        const count = ticket.count || 0;
+        const rows = ticket.row || [];
+
+        // Add to inventory (for the table)
+        inventory.push({
+          section,
+          price,
+          count,
+          rows,
+          type: ticketType,
+          offer: ticketType
+        });
+
+        // Aggregate section stock (for map/filtered sections)
+        if (!sectionStock[section]) {
+          sectionStock[section] = { sectionName: section, minPrice: price, maxPrice: price, totalAvail: 0, offers: [] };
+        }
+        const ss = sectionStock[section];
+        ss.minPrice = Math.min(ss.minPrice, price);
+        ss.maxPrice = Math.max(ss.maxPrice, price);
+        ss.totalAvail += count;
+        if (!ss.offers.find(o => o.offerType === ticketType)) {
+          ss.offers.push({ offerType: ticketType, minPrice: price, maxPrice: price, available: count });
+        } else {
+          const existing = ss.offers.find(o => o.offerType === ticketType);
+          existing.minPrice = Math.min(existing.minPrice, price);
+          existing.maxPrice = Math.max(existing.maxPrice, price);
+          existing.available += count;
+        }
+      }
+    }
+
+    res.json({
+      source: 'tm-direct',
+      sectionStock: Object.values(sectionStock),
+      inventory,
+      totalSections: Object.keys(sectionStock).length,
+      totalTickets: inventory.reduce((s, i) => s + i.count, 0)
+    });
+  } catch (e) {
+    console.log('[TM-STOCK] Error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // SVG map cache (in-memory, keyed by eventId)
 const mapCache = new Map();
 
