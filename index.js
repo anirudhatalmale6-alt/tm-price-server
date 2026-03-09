@@ -231,8 +231,24 @@ app.get('/api/stock/:eventId', async (req, res) => {
 // SVG map cache (in-memory, keyed by eventId)
 const mapCache = new Map();
 
+// Helper: extract raw SVG from potentially HTML-wrapped Wayback response
+function extractSvg(text) {
+  if (!text || !text.includes('<svg')) return null;
+  // If it starts with <?xml or <svg, it's already raw SVG
+  if (text.trimStart().startsWith('<?xml') || text.trimStart().startsWith('<svg')) {
+    return text;
+  }
+  // Otherwise extract SVG from HTML wrapper
+  const svgStart = text.indexOf('<svg');
+  const svgEnd = text.lastIndexOf('</svg>');
+  if (svgStart >= 0 && svgEnd > svgStart) {
+    return text.substring(svgStart, svgEnd + 6);
+  }
+  return null;
+}
+
 // Get venue SVG map for a TM event
-// Strategy: 1) Wayback Machine proxy  2) PhantomChecker  3) 404 (frontend generates chart)
+// Strategy: 1) Wayback Machine (multiple URL formats)  2) PhantomChecker  3) 404 (frontend generates chart)
 app.get('/api/map/:eventId', async (req, res) => {
   const { eventId } = req.params;
 
@@ -245,27 +261,37 @@ app.get('/api/map/:eventId', async (req, res) => {
   const mapUrl = `https://mapsapi.tmol.io/maps/geometry/3/event/${eventId}/staticImage?type=svg&systemId=HOST&sectionLevel=true&avertaFonts=true`;
 
   // Strategy 1: Wayback Machine proxy (bypasses PerimeterX)
-  try {
-    console.log(`[MAP] Trying Wayback Machine for ${eventId}...`);
-    const wbResp = await fetch(`https://web.archive.org/web/0id_/${mapUrl}`, {
-      headers: { 'Accept-Encoding': 'gzip, deflate, br' },
-      redirect: 'follow',
-      timeout: 15000
-    });
-    if (wbResp.ok) {
-      const svg = await wbResp.text();
-      if (svg.includes('<svg') && svg.length > 1000) {
-        mapCache.set(eventId, svg);
-        console.log(`[MAP] Wayback hit for ${eventId} (${svg.length} chars)`);
-        return res.type('image/svg+xml').send(svg);
+  // Try multiple URL formats — 0id_ returns raw file, plain URL returns latest cached version
+  const wbUrls = [
+    `https://web.archive.org/web/0id_/${mapUrl}`,
+    `https://web.archive.org/web/${mapUrl}`,
+    `https://web.archive.org/web/2id_/${mapUrl}`,
+  ];
+
+  for (const wbUrl of wbUrls) {
+    try {
+      const label = wbUrl.includes('0id_') ? '0id_' : wbUrl.includes('2id_') ? '2id_' : 'plain';
+      console.log(`[MAP] Trying Wayback (${label}) for ${eventId}...`);
+      const wbResp = await fetch(wbUrl, {
+        headers: { 'Accept-Encoding': 'gzip, deflate, br' },
+        redirect: 'follow'
+      });
+      if (wbResp.ok) {
+        const text = await wbResp.text();
+        const svg = extractSvg(text);
+        if (svg && svg.length > 1000) {
+          mapCache.set(eventId, svg);
+          console.log(`[MAP] Wayback (${label}) hit for ${eventId} (${svg.length} chars)`);
+          return res.type('image/svg+xml').send(svg);
+        }
       }
+      console.log(`[MAP] Wayback (${label}) miss for ${eventId} (${wbResp.status})`);
+    } catch (e) {
+      console.log(`[MAP] Wayback error: ${e.message}`);
     }
-    console.log(`[MAP] Wayback miss for ${eventId} (${wbResp.status})`);
-  } catch (e) {
-    console.log(`[MAP] Wayback error: ${e.message}`);
   }
 
-  // Strategy 2: PhantomChecker proxy
+  // Strategy 2: PhantomChecker proxy (often broken, but try)
   try {
     console.log(`[MAP] Trying PhantomChecker for ${eventId}...`);
     const resp = await pcApiCall(`${PC_API}/sites/ticketmaster/map-image?query=${encodeURIComponent(mapUrl)}`, {
@@ -273,14 +299,16 @@ app.get('/api/map/:eventId', async (req, res) => {
     });
     if (resp.ok) {
       const b64 = await resp.text();
-      const svg = Buffer.from(b64.replace(/^"|"$/g, ''), 'base64').toString('utf8');
-      // Validate it's a real SVG (not "lol" or garbage)
-      if (svg.includes('<svg') && svg.length > 1000 && !svg.includes('>lol<')) {
-        mapCache.set(eventId, svg);
-        console.log(`[MAP] PC hit for ${eventId} (${svg.length} chars)`);
-        return res.type('image/svg+xml').send(svg);
+      if (b64 && b64.length > 10) {
+        const decoded = Buffer.from(b64.replace(/^"|"$/g, ''), 'base64').toString('utf8');
+        const svg = extractSvg(decoded);
+        if (svg && svg.length > 1000) {
+          mapCache.set(eventId, svg);
+          console.log(`[MAP] PC hit for ${eventId} (${svg.length} chars)`);
+          return res.type('image/svg+xml').send(svg);
+        }
       }
-      console.log(`[MAP] PC returned invalid SVG for ${eventId}`);
+      console.log(`[MAP] PC returned invalid data for ${eventId}`);
     }
   } catch (e) {
     console.log(`[MAP] PC error: ${e.message}`);
