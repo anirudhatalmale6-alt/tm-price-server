@@ -394,7 +394,7 @@
   <div class="topbar">
     <div style="display:flex;align-items:baseline;">
       <h1>TM PRICE ADMIN</h1>
-      <span class="version">v5.2</span>
+      <span class="version">v5.3</span>
     </div>
     <div class="topbar-right">
       <span class="event-count" id="eventCount">0 events</span>
@@ -1301,6 +1301,52 @@
     let svgMapLoaded = false;
     let svgMapMode = ''; // 'real' or 'generated'
 
+    // SVG ID <-> Stock Name mapping
+    // SVG uses short IDs: E1, N22, W5, B28, 103
+    // Stock uses full names: EAST 1, NORTH 22, WEST 5, BOX 28, 103
+    const SVG_PREFIX_MAP = { 'E': 'EAST', 'N': 'NORTH', 'W': 'WEST', 'S': 'SOUTH', 'B': 'BOX' };
+    const STOCK_PREFIX_MAP = { 'EAST': 'E', 'NORTH': 'N', 'WEST': 'W', 'SOUTH': 'S', 'BOX': 'B' };
+    // Background/non-section path IDs to exclude from click handlers
+    const EXCLUDED_PATH_IDS = new Set(['POCHE', 'STAGE', 'MIX', 'INACTIVE', 'ARROWS', 'PRESS',
+      'DROP SHADOW', 'DROP SHADOW S LEVEL', 'DROP SHADOW S-W', 'DROP SHADOW S70-83',
+      'DROPSHADOW', 'DROPSHADOW 300s', 'DS TRAY - 200 EXPANSION', 'DS TRAY - 300 EXPANSION',
+      'DS TRAY - 400 EXPANSION', '100S INACTIVE', 'GA1']);
+
+    function svgIdToStockName(svgId) {
+      // Pure numeric: "103" -> "103"
+      if (/^\d+$/.test(svgId)) return svgId;
+      // Prefixed: "E1" -> "EAST 1", "N22" -> "NORTH 22", "W5" -> "WEST 5", "B28" -> "BOX 28"
+      const m = svgId.match(/^([ENWSB])(\d+)$/);
+      if (m) {
+        const prefix = SVG_PREFIX_MAP[m[1]];
+        if (prefix) return prefix + ' ' + m[2];
+      }
+      return svgId; // fallback: return as-is
+    }
+
+    function stockNameToSvgId(stockName) {
+      // Pure numeric
+      if (/^\d+$/.test(stockName)) return stockName;
+      // Named: "EAST 1" -> "E1", "NORTH 22" -> "N22"
+      const m = stockName.match(/^(EAST|NORTH|WEST|SOUTH|BOX)\s+(\d+)$/i);
+      if (m) {
+        const prefix = STOCK_PREFIX_MAP[m[1].toUpperCase()];
+        if (prefix) return prefix + m[2];
+      }
+      return stockName;
+    }
+
+    function isSectionPath(pathId) {
+      if (!pathId) return false;
+      if (EXCLUDED_PATH_IDS.has(pathId)) return false;
+      // Exclude known background patterns
+      if (/^(DROP|DS |POCHE|INACTIVE)/i.test(pathId)) return false;
+      // Include numeric, or letter+number combos (E1, N22, W5, B28, S1)
+      if (/^\d+$/.test(pathId)) return true;
+      if (/^[ENWSB]\d+$/.test(pathId)) return true;
+      return false;
+    }
+
     async function fetchVenueMap(eventId) {
       const container = document.getElementById('svgMapContainer');
       container.innerHTML = '<div style="text-align:center;padding:30px;color:#999;font-size:12px;"><div class="spinner" style="display:inline-block;width:20px;height:20px;border:2px solid #ccc;border-top-color:#026CDF;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:8px;"></div><br>Loading venue map...</div>';
@@ -1338,11 +1384,12 @@
           });
           svg.querySelectorAll('path[id]').forEach(path => {
             const id = path.getAttribute('id');
-            if (/^\d+$/.test(id)) {
+            if (isSectionPath(id)) {
               path.style.cursor = 'pointer';
-              path.addEventListener('click', () => onMapSectionClick(id));
-              path.addEventListener('mouseenter', () => onMapSectionHover(id, true));
-              path.addEventListener('mouseleave', () => onMapSectionHover(id, false));
+              const stockName = svgIdToStockName(id);
+              path.addEventListener('click', () => onMapSectionClick(stockName));
+              path.addEventListener('mouseenter', () => onMapSectionHover(stockName, true, id));
+              path.addEventListener('mouseleave', () => onMapSectionHover(stockName, false, id));
             }
           });
         }
@@ -1515,9 +1562,10 @@
 
       svg.querySelectorAll('path[id]').forEach(path => {
         const id = path.getAttribute('id');
-        if (!/^\d+$/.test(id)) return;
+        if (!isSectionPath(id)) return;
 
-        const sec = stockMap[id];
+        const stockName = svgIdToStockName(id);
+        const sec = stockMap[stockName];
         if (sec && sec._totalAvail > 0) {
           // Map price to 0-5 tier index using equal-width bins
           const pctile = (sec.minPrice - globalMin) / priceRange;
@@ -1589,10 +1637,12 @@
       }, 50);
     }
 
-    function onMapSectionHover(sectionId, entering) {
+    function onMapSectionHover(sectionId, entering, svgPathId) {
       const svg = document.querySelector('#svgMapContainer svg');
       if (!svg) return;
-      const path = svg.querySelector('path[id="' + sectionId + '"]');
+      // Use svgPathId if provided (direct from SVG), otherwise try to convert stock name to SVG ID
+      const pathId = svgPathId || stockNameToSvgId(sectionId);
+      const path = svg.querySelector('path[id="' + pathId + '"]');
       if (!path) return;
 
       if (entering) {
@@ -1605,7 +1655,6 @@
       } else {
         if (selectedSection !== sectionId) {
           path.setAttribute('fill-opacity', '0.85');
-          // Restore stroke from colorMapSections
           const sec = lastStockData ? (lastStockData.sectionStock || []).find(s => s.sectionName === sectionId) : null;
           if (sec) {
             const fill = path.getAttribute('fill');
@@ -1668,10 +1717,11 @@
       } else {
         const svg = document.querySelector('#svgMapContainer svg');
         if (!svg) return;
+        const targetSvgId = stockNameToSvgId(sectionId);
         svg.querySelectorAll('path[id]').forEach(path => {
           const id = path.getAttribute('id');
-          if (!/^\d+$/.test(id)) return;
-          if (id === sectionId) {
+          if (!isSectionPath(id)) return;
+          if (id === targetSvgId) {
             path.classList.add('map-sec-active');
             path.setAttribute('fill', '#ec4899');
             path.setAttribute('fill-opacity', '0.9');
@@ -1849,8 +1899,9 @@
         if (!svg) return;
         svg.querySelectorAll('path[id]').forEach(path => {
           const id = path.getAttribute('id');
-          if (!/^\d+$/.test(id)) return;
-          const sec = stockMap[id];
+          if (!isSectionPath(id)) return;
+          const stockName = svgIdToStockName(id);
+          const sec = stockMap[stockName];
           let visible = true;
           if (activeZoneFilter && sec) {
             if (getZoneForSection(sec.sectionName) !== activeZoneFilter) visible = false;
